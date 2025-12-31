@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NP library</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            text-align: center;
+            margin: 0;
+            padding: 20px 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+        }
+        h1 { color: #ffd700; font-size: 24px; margin: 10px 0; text-shadow: 0 0 4px #ff8c00; }
+        #search-input {
+            padding: 10px;
+            font-size: 16px;
+            width: 80%;
+            max-width: 400px;
+            border: 1px solid #ff8c00;
+            border-radius: 5px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            margin: 20px 0;
+        }
+        #board-wrapper {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        #game-area {
+            display: grid;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 20px;
+            justify-content: center;
+            align-content: flex-start;
+            background: linear-gradient(145deg, rgba(20,1,11,0.4), rgba(20,30,11,0.6));
+            border-radius: 5px;
+            box-shadow: 0 8px 32px rgba(20,1,11,0.8), inset 0 0 30px rgba(255,140,0,0.2);
+            backdrop-filter: blur(5px);
+            min-height: 80vh;
+        }
+        .window.tile {
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            background: linear-gradient(135deg, rgba(20,1,11,0.7), rgba(100,75,50,0.7));
+            box-shadow: 0 2px 2px rgba(0,0,0,0.5), 0 0 10px rgba(255,140,0,0.3);
+            flex: 0px 0 auto; /* no grow/shrink */
+            display: flex;
+            flex-direction: column;
+        }
+        .window.tile:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px #ff8c00, 0 10px 30px rgba(255,140,0,0.6);
+        }
+        .body {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .topbar {
+            height: 40px;
+            background: linear-gradient(45deg, rgba(105,10,11,0.8), #D10202);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffd700;
+            font-weight: bold;
+            text-shadow: 0 0 4px #ff8c00;
+        }
+        .tile-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            gap: 8px;
+            text-decoration: none;
+            color: inherit;
+        }
+        .app-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+        .word { 
+            font-weight: bold; 
+            font-size: 18px; 
+            color: #FdFFfb;
+            text-shadow: 0 0 4px #AB7209;
+        }
+        .description {
+            font-size: 14px;
+            color: #e6e6fa;
+            text-align: center;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+        .rating {
+            font-size: 20px;
+            color: #ffd700;
+        }
+        .side-menu {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 200px;
+            background: linear-gradient(135deg, rgba(20,1,11,0.8), rgba(100,75,50,0.8));
+            box-shadow: -20px 0 -40px rgba(255,140,0,0.5);
+            padding: 20px;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 100;
+        }
+        .side-menu.open { transform: translateX(0); }
+        .side-menu ul { list-style: none; padding: 0; }
+        .side-menu a {
+            color: #ffd700;
+            text-decoration: none;
+            font-size: 18px;
+            display: block;
+            padding: 10px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .side-menu a:hover { background: rgba(255,165,0,0.4); }
+        #menu-toggle {
+            position: fixed;
+            left: 10px;
+            top: 10px;
+            z-index: 101;
+            background: none;
+            border: none;
+            color: #ffd700;
+            font-size: 28px;
+            cursor: pointer;
+        }
+        @media (max-width: 600px) {
+            .word { font-size: 16px; }
+            .description { font-size: 12px; }
+            .app-icon { width: 90px; height: 90px; }
+            .side-menu { width: 150px; }
+            #game-area { 
+            display: grid;
+            grid-template-columns: repeat(2, minmax(70px,1fr));
+            padding: 10px; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <button id="menu-toggle">☰</button>
+    <nav class="side-menu">
+        <ul>
+            <li><a href="#" data-category="all">All Apps</a></li>
+            <li><a href="#" data-category="games">Games</a></li>
+            <li><a href="#" data-category="productivity">Productivity</a></li>
+            <li><a href="#" data-category="entertainment">Entertainment</a></li>
+        </ul>
+    </nav>
+    <h1>Fun Store</h1>
+    <input type="text" id="search-input" placeholder="Search apps...">
+    <div id="board-wrapper">
+        <div id="game-area">
+            <!-- thike are as follows -->
+            <div class="window tile" data-category="games">
+                <div class="body">
+                    <div class="topbar" data-title="math">#game-00</div>
+                    <a href="unitAdd.html" target="_blank" class="tile-content" data-url="unitAdd.html">
+                        <img class="app-icon" src="https://mathforlove.com/wp-content/uploads/2019/09/prime-climb-big.jpg" alt="Icon">
+                        <div class="word" data-word="math"></div>
+                        <div class="description" data-desc="Manual fallback description if CORS blocks or no meta.">Brain-melting action, nonstop adrenaline, pure fire gameplay for real ones.</div>
+                        <div class="rating">★★★★☆</div>
+                    </a>
+                </div>
+            </div>
+            <div class="window tile" data-category="productivity">
+                <div class="body">
+                    <div class="topbar" data-title="math">#game-00</div>
+                    <a href="majorSys.html" target="_blank" class="tile-content" data-url="majorSys.html">
+                        <img class="app-icon" src="https://c8.alamy.com/comp/2DADNM5/maths-game-with-pictures-geometric-shapes-for-children-middle-level-education-game-for-kids-preschool-worksheet-activity-task-for-the-development-2DADNM5.jpg" alt="Icon">
+                        <div class="word" data-word="math">#game-00</div>
+                        <div class="description" data-desc="Manual fallback description if CORS blocks or no meta.">Organize your life constitutionally while slaying tasks like a boss.</div>
+                        <div class="rating">★★★★★</div>
+                    </a>
+                </div>
+            </div>
+            <div class="window tile" data-category="entertainment">
+                <div class="body">
+                    <div class="topbar" data-title="math">#game-00</div>
+                    <a href="FingerAddSub.htm" target="_blank" class="tile-content" data-url="FingerAddSub.htm">
+                        <img class="app-icon" src="https://m.media-amazon.com/images/I/81BtGkgPz7L._UF350,350_QL80_.jpg" alt="Icon">
+                        <div class="word" data-word="math">#game-00</div>
+            <div class="description" data-desc="Manual fallback description if CORS blocks or no meta.">Create peak brain rot memes that go viral instantly, no cap.</div>
+                        <div class="rating">★★★☆☆</div>
+                    </a>
+                </div>
+            </div>
+            <div class="window tile" data-category="entertainment">
+                <div class="body">
+                    <div class="topbar" data-title="math">#game-00</div>
+                    <a href="addsub.html" target="_blank" class="tile-content" data-url="addsub.html">
+                        <img class="app-icon" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrqxX-J2dNtbBe1wSwRXBjBbEdu7-MUoXYdg&s" alt="Icon">
+                        <div class="word" data-word="math">#game-00</div>
+<div class="description" data-desc="Manual fallback description if CORS blocks or no meta.">Create peak brain rot memes that go viral instantly, no cap.</div>
+                        <div class="rating">★★★☆☆</div>
+                    </a>
+                </div>
+            </div>
+            <div class="window tile" data-category="games">
+    <div class="body">
+        <div class="topbar" data-title="Epic Shooter">Epic Shooter</div>
+        <a href="unitAdd.html" target="_blank" class="tile-content" data-url="https://mathforlove.com">
+            <img class="app-icon" src="https://picsum.photos/200/200?random=1" alt="Icon">
+            <div class="word" data-word="Epic Shooter">Epic Shooter</div>
+            <div class="description" data-desc="Manual desc if fetch fails.">Manual desc if fetch fails.</div>
+            <div class="rating">★★★★☆</div>
+        </a>
+    </div>
+</div>
+            <!-- new tiles here -->
+        </div>
+    </div>
+
+    <script>
+        // Menu toggle
+        document.getElementById('menu-toggle').addEventListener('click', () => {
+            document.querySelector('.side-menu').classList.toggle('open');
+        });
+
+        // Category filter
+        document.querySelectorAll('.side-menu a').forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                const cat = link.dataset.category;
+                document.querySelectorAll('.window.tile').forEach(tile => {
+                    tile.style.display = (cat === 'all' || tile.dataset.category === cat) ? 'flex' : 'none';
+                });
+                document.querySelector('.side-menu').classList.remove('open');
+            });
+        });
+
+        // Search
+        document.getElementById('search-input').addEventListener('input', e => {
+            const query = e.target.value.toLowerCase();
+            document.querySelectorAll('.window.tile').forEach(tile => {
+                if (tile.style.display !== 'none') {
+                    const name = tile.querySelector('.topbar').textContent.toLowerCase();
+                    tile.style.display = name.includes(query) ? 'flex' : 'none';
+                }
+            });
+        });
+
+        // Random sizes on load
+        const tiles = document.querySelectorAll('.window.tile');
+        const widths = ['180px', '300px', '350px', '400px', '280px']; // variety
+        const heights = ['270px', '320px', '380px', '250px', '350px'];
+        tiles.forEach(tile => {
+            tile.style.width = widths[0];
+            tile.style.height = heights[0];
+        });
+    </script>
+</body>
+</html>
