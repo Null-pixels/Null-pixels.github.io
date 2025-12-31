@@ -10,6 +10,7 @@
     <meta property="og:type" content="website"> 
     <link rel="icon" href="https://mathforlove.com/wp-content/uploads/2019/09/prime-climb-big.jpg" type="image/x-icon">
     <title>Addition / Subtraction Tiles Matching</title>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,27 +23,24 @@
             flex-direction: column;
             align-items: center;
         }
-        h1 { color: #000; font-size: 24px; margin: 10px 0; text-shadow: 0 0 4px #adadff; } /* gold-yellow with orange glow */
-        .instructions { max-width: 90%; margin: 15px auto; font-size: 16px; color: #e6e6fa; } /* lavender tint for readability */
-        #controls { margin: 15px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; }
-        button {
+        h1 { color: #333; font-size: 24px; margin: 10px 0; }
+        #instructions { max-width: 90%; margin: 15px auto; font-size: 16px; color: #555; }
+        #controls { margin: 15px; }
+        #mode-toggle, #reset-btn {
             padding: 10px 20px;
             font-size: 18px;
             border: none;
-            border-radius: 2px;
+            border-radius: 5px;
             cursor: pointer;
-            background: linear-gradient(45deg, #9494ff, #9494ff, #adadff); /* orange to yellow fiery gradient */
-            color: #060606; /* deep purple text */
-            box-shadow: 0 4px 15px rgba(255,225,210, 0.6);
-            transition: all 0.3s ease;
+            margin: 0 10px;
         }
-        button:hover { 
-            background: linear-gradient(45deg, #adadff, #aeaeff); 
-            transform: translateY(-3px);
-            box-shadow: 0 0 10px #ababff, 0 8px 25px rgba(255, 225, 210, 0.8); /* neon orange glow hover */
-        }
-        #message { font-size: 15px; margin: 5px; min-height: 17px; color: #ff8c05; font-weight: bold;justify-content: center; }
+        #mode-toggle { background-color: #9494ff; color: white; }
+        #mode-toggle:hover { background-color: #adadff; }
+        #reset-btn { background-color: #9494ff; color: white; }
+        #reset-btn:hover { background-color: #adadff; }
+        #message { font-size: 22px; margin: 15px; min-height: 40px; color: #d00; font-weight: bold; }
 
+        /* Board wrapper for scale + perfect centering */
         #board-wrapper {
             width: fit-content;
             margin: 20px auto;
@@ -54,75 +52,51 @@
             grid-template-columns: repeat(6, minmax(50px,1fr));
             gap: 10px;
             padding: 15px;
-            background: linear-gradient(145deg, rgba(244,220,255,0.4), rgba(200,190,190,0.6)); /* translucent violet overlay */
+            background-color: #e0e0ff;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            justify-content: center;
+            justify-content: center; /* centers tiles in last row */
         }
 
         .tile {
             width: 100%;
             padding-bottom: 100%;
-            border: 1.5px solid #d2f8d2;
+            border: 1px solid #416755;
             border-radius: 10px;
             position: relative;
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             user-select: none;
             overflow: hidden;
-            background: linear-gradient(145deg, rgba(220,250,220,0.4), rgba(55,100,124,0.6));            
         }
 
         .tile-content {
             position: absolute;
             top: 0; left: 0;
-            width: 100%; height: 100%;
+            width: 113%; height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 8px;
+            font-weight: bold;
+            padding: 5px;
             box-sizing: border-box;
-            line-height:1;
-            gap:0;
+            transform: scale(0.55);
+            transform-origin: center;
         }
 
-        .number-row {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 2px 0;
-        }
+        .top, .bottom { font-size: 30px; }
+        .operator { font-size: 21px; margin: 1px 0; }
+        .tile-content:not(:has(.top)) { font-size: 36px; }
+        .white { background-color: #5f967c; } /* cream */
+        .black { background-color: #e0ffe0; } /* pale-green */
 
-        .dot {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            margin: 0 3px;
-        }
-        .black-dot { background-color: #000; }
-        .red-dot { background-color: #d00; }
-
-        .word { font-weight: bold; font-size: 28px; }
-        .operator { font-size: 7px; margin: 2px 0; font-weight: bold;   }
-
-        .white { background: linear-gradient(135deg, rgba(186,220,211,0.9), rgba(220,250,220,1)) !important; } 
-        .black { background: linear-gradient(135deg, rgba(55,100,134,0.8), rgba(95,150,135,0.8)) !important; }
-        
         .selected { 
-            border: 1.5px solid #d2f8d2;
+            border: 2px solid #d2f8d2;
             background-color: #90ee90;
-            transform: scale(1.05);
-            box-shadow: 0 0 30px #2F6696, 0 0 60px #d2f8d2, 0 0 90px rgba(210,255,210,0.8) !important; /* multi-layer neon orange-yellow pulsatin' glow */
-            animation: pulseGlow 1.5s infinite alternate;
-            z-index: 10;
-        }
-
-        @keyframes pulseGlow {
-            from { box-shadow: 0 0 20px #2F6696, 0 0 40px #d2f8d2; }
-            to { box-shadow: 0 0 40px #2F6696, 0 0 80px #d2f8d2, 0 0 120px rgba(210,233,210,0.9); }
-        }
-        
+            transform: scale(1.02);
+            transform-origin: left center;
+         }
         .matched { opacity: 0.4; cursor: default; border-color: #0a0; }
 
         #celebration-overlay {
@@ -131,30 +105,27 @@
             display: flex; align-items: center; justify-content: center;
             pointer-events: none; opacity: 0; transition: opacity 0.3s ease; z-index: 1000;
         }
-        #celebration-content { font-size: 90px; font-weight: bold; color: white; opacity: 0; text-align: center; }
-        #seperator {font-size: 5px;margin: 1px 0; font-weight: 30; gap:0; padding:0px;opacity: 0.4;}
-        
+        #celebration-number { font-size: 240px; font-weight: bold; color: white; opacity: 0; }
+
         @media (max-width: 500px) {
-            .dot { width: 7px; height: 9px; margin: 0 2px; }
-            .word { font-size: 13px; }
-            .operator { font-size: 14px; margin: .5px 0; font-weight: bold;line-height: 1;}
-            #celebration-content { font-size: 100px; }
-        }    
+            .top, .bottom { font-size: 32px; }
+            .operator { font-size: 17px; }
+            .tile-content:not(:has(.top)) { font-size: 34px; }
+            #celebration-number { font-size: 150px; }
     </style>
 </head>
 <body>
     <h1>Addition / Subtraction Tiles Matching Game</h1>
     <div id="instructions">
-        
         Tap two tiles with the same result to match & lock.<br>
         Subtraction borrows when needed (4−8 = 6).<br>
-        ~50 tiles per game, fresh mix every time.<br>
-        <p id="message"></p>
+        ~50 tiles per game, fresh mix every time. Clear the board, legend!
     </div>
     
-    <div id="controls" class="instructions">
-        <button id="mode-toggle">operand(-)</button>
-        <button id="rep-toggle">word</button>
+    <div id="controls">
+        <button id="mode-toggle">Switch to
+        Subtraction</button>
+        <div id="message"></div>
         <button id="reset-btn">↩️</button>
     </div>
 
@@ -163,79 +134,11 @@
     </div>
 
     <div id="celebration-overlay">
-        <div id="celebration-content"></div>
+        <div id="celebration-number"></div>
     </div>
 
     <script>
-        let mode = 'addition'; // 'addition' or 'subtraction'
-        let representation = 'dots'; // 'dots' or 'words'
-
-        const numberWords = [
-            'zero', 'one', 'two', 'three', 'four', 'five',
-            'six', 'seven', 'eight', 'nine', 'ten',
-            'eleven', 'twelve', 'thir\nteen', 'four\nteen', 'fif\nteen',
-            'six\nteen', 'seven\nteen', 'eigh\nteen', 'nine\nteen'
-        ];
-
-        function numberToWords(n) {
-            if (n < 20) return numberWords[n];
-            return n.toString(); // fallback, though we max at 19
-        }
-
-        function createDotRow(num) {
-            const row = document.createElement('div');
-            row.className = 'number-row';
-            if (num === 0) {
-            const dot = document.createElement('div');
-            dot.className = 'dot';
-            dot.style.backgroundColor = 'transparent';
-            dot.style.border = '2px solid #000'; 
-            dot.style.width = '5px';
-            dot.style.height = '7px';
-            row.appendChild(dot);
-            return row;
-    }
-            const fives = Math.floor(num / 5);
-            const ones = num % 5;
-            for (let i = 0; i < fives; i++) {
-                const dot = document.createElement('div');
-                dot.className = 'dot red-dot';
-                row.appendChild(dot);
-            }
-            for (let i = 0; i < ones; i++) {
-                const dot = document.createElement('div');
-                dot.className = 'dot black-dot';
-                row.appendChild(dot);
-            }
-            return row;
-        }
-
-        function createNumberDisplay(num) {
-            const container = document.createElement('div');
-            const seperator = document.createElement('div');
-            seperator.id = "seperator";
-            if (representation === 'words') {
-                const word = document.createElement('div');
-                word.className = 'word';
-                word.textContent = numberToWords(num);
-                container.appendChild(word);
-            } else { // dots
-                if (num < 10) {
-                    container.appendChild(createDotRow(num));
-                } else {
-                    // teens: two rows
-                    const tens = Math.floor(num / 10);
-                    const ones = num % 10;
-                    if (tens > 0) {
-                        seperator.innerHTML = '───────';
-                        container.appendChild(createDotRow(tens));
-                        container.appendChild(seperator);
-                        }
-                    if (ones > 0 || num === 10) container.appendChild(createDotRow(ones));
-                }
-            }
-            return container;
-        }
+        let mode = 'addition';
 
         function generateTiles() {
             const allPossible = [];
@@ -247,15 +150,47 @@
             }
 
             const selected = [];
+            const usedCombos = new Set();          
+            for (let digit = 0; digit <= 9; digit++) {
+                let possiblesTop = allPossible.filter((t, idx) => t.values[0] === digit && !usedCombos.has(idx));
+
+                if (possiblesTop.length > 0) {
+                    let chosen = possiblesTop[Math.floor(Math.random() * possiblesTop.length)];
+                    let idx = allPossible.indexOf(chosen);
+                    selected.push(chosen);
+                    usedCombos.add(idx);  }
+
+
+                let possiblesBottom = allPossible.filter((t, idx) => t.values[1] === digit && !usedCombos.has(idx));
+                if (possiblesBottom.length > 0)     {
+                    let chosen = possiblesBottom[Math.floor(Math.random() * possiblesBottom.length)];
+                    let idx = allPossible.indexOf(chosen);
+                    selected.push(chosen);
+                    usedCombos.add(idx);
+
+                }}
+
+            let remaining = allPossible.filter((t, idx) => !                usedCombos.has(idx));
+            
+            while (selected.length < 56 && remaining.length > 0) {
+    let idx = Math.floor(Math.random() * remaining.length);
+    selected.push(remaining[idx]);
+    remaining.splice(idx, 1);
+}
+
+/*
             const used = new Set();
             while (selected.length < 49 && used.size < allPossible.length) {
-                const idx = Math.floor(Math.random() * allPossible.length);
+                const idx =             Math.floor(Math.random() * allPossible.length);
                 if (!used.has(idx)) {
                     used.add(idx);
-                    selected.push(allPossible[idx]);
-                }
+                selected.push(allPossible[idx]);
+               }
             }
 
+*/
+
+            // Count results & add extra result tile for odd counts
             const resultCounts = {};
             selected.forEach(t => resultCounts[t.result] = (resultCounts[t.result] || 0) + 1);
 
@@ -289,23 +224,6 @@
             shuffle(tiles);
         }
 
-        function renderTileContent(tile) {
-            const content = document.createElement('div');
-            content.className = 'tile-content';
-
-            if (tile.type === 'operation') {
-                content.appendChild(createNumberDisplay(tile.values[0]));
-                const op = document.createElement('div');
-                op.className = 'operator';
-                op.textContent = tile.operator;
-                content.appendChild(op);
-                content.appendChild(createNumberDisplay(tile.values[1]));
-            } else {
-                content.appendChild(createNumberDisplay(tile.value));
-            }
-            return content;
-        }
-
         function renderBoard() {
             const gameArea = document.getElementById('game-area');
             gameArea.innerHTML = '';
@@ -322,8 +240,27 @@
                     div.classList.add('white');
                 }
 
-                div.appendChild(renderTileContent(tile));
+                const content = document.createElement('div');
+                content.classList.add('tile-content');
 
+                if (tile.type === 'operation') {
+                    const top = document.createElement('div');
+                    top.classList.add('top');
+                    top.textContent = tile.values[0];
+                    const op = document.createElement('div');
+                    op.classList.add('operator');
+                    op.textContent = tile.operator;
+                    const bottom = document.createElement('div');
+                    bottom.classList.add('bottom');
+                    bottom.textContent = tile.values[1];
+                    content.appendChild(top);
+                    content.appendChild(op);
+                    content.appendChild(bottom);
+                } else {
+                    content.textContent = tile.value;
+                }
+
+                div.appendChild(content);
                 div.dataset.index = index;
                 div.addEventListener('click', handleClick);
                 gameArea.appendChild(div);
@@ -333,35 +270,19 @@
 
         function celebrateMatch(display) {
             const overlay = document.getElementById('celebration-overlay');
-            const celeContent = document.getElementById('celebration-content');
-            
-            if (representation === 'words') {
-                celeContent.textContent = numberToWords(display);
-            } else {
-                celeContent.innerHTML = '';
-                celeContent.textContent = numberToWords(display);
-          /*      if (display > 9) {
-                    const tens = Math.floor(display / 10);
-                    const ones = display % 10;
-                    if (tens > 0) celeContent.appendChild(createDotRow(tens));
-                    if (ones > 0 || display === 10) celeContent.appendChild(createDotRow(ones));
-                } else {
-                    celeContent.appendChild(createDotRow(display));
-                }*/
-                celeContent.style.fontSize = '180px';
-                celeContent.style.display = 'flex';
-                celeContent.style.flexDirection = 'column';
-                celeContent.style.alignItems = 'center';
-            }
-
+            const number = document.getElementById('celebration-number');
+            number.textContent = display;
             overlay.style.opacity = 1;
             void overlay.offsetWidth;
-            celeContent.style.opacity = 1;
+            number.style.transition = 'opacity 0.2s ease';
+            number.style.opacity = 1;
 
             setTimeout(() => {
+                overlay.style.transition = 'opacity 0.6s ease';
+                number.style.transition = 'opacity 0.4s ease';
                 overlay.style.opacity = 0;
-                celeContent.style.opacity = 0;
-            }, 800);
+                number.style.opacity = 0;
+            }, 500);
         }
 
         let firstSelected = null;
@@ -373,7 +294,7 @@
             if (tileDiv.classList.contains('matched')) return;
 
             const index = parseInt(tileDiv.dataset.index);
-            if (firstSelected === index) return;
+            if (firstSelected === index) return; // no self-match
 
             const tile = tiles[index];
 
@@ -394,10 +315,10 @@
                     celebrateMatch(firstTile.result);
 
                     if (matchedCount === totalPairs) {
+                        celebrateMatch('GOAT');
                         setTimeout(() => {
-                            celebrateMatch('GOAT');
                             document.getElementById('message').textContent = 'BOARD CLEARED! YOU ARE THE GOAT!';
-                        }, 300);
+                        }, 600);
                     }
                 } else {
                     document.getElementById('message').textContent = 'NOPE, WRONG RESULT BRUH';
@@ -414,19 +335,13 @@
 
         document.getElementById('mode-toggle').addEventListener('click', () => {
             mode = mode === 'addition' ? 'subtraction' : 'addition';
-            document.getElementById('mode-toggle').textContent = mode === 'addition' ? 'operand(-)' : 'operand(+)';
+            document.getElementById('mode-toggle').textContent = mode === 'addition' ? 'Switch to Subtraction' : 'Switch to Addition';
             tiles = generateTiles();
             totalPairs = tiles.length / 2;
             mildShuffle();
             firstSelected = null;
             matchedCount = 0;
             document.getElementById('message').textContent = '';
-            renderBoard();
-        });
-
-        document.getElementById('rep-toggle').addEventListener('click', () => {
-            representation = representation === 'dots' ? 'words' : 'dots';
-            document.getElementById('rep-toggle').textContent = representation === 'dots' ? 'words' : 'Dots';
             renderBoard();
         });
 
