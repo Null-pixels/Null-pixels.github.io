@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carry Addition Master</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background suitable: #e0e0ff;
+        text-align: center;
+        padding: 40px;
+        margin: 0;
+        
+    }
+    h1 { color: #2c3e50; }
+    select, button {
+        padding: 12px 20px;
+        font-size: 20px;
+        margin: 10px;
+        cursor: pointer;
+        border-radius: 8px;
+    }
+    #equation {
+        font-size: 60px;
+        font-weight: bold;
+        margin: 40px 0;
+        letter-spacing: 5px;
+    }
+    .red-digit {
+        color: red;
+        text-decoration: underline;
+        text-underline-offset: 4px;
+    }
+    #question {
+        font-size: 32px;
+        margin: 30px 0;
+        font-weight: bold;
+    }
+    #options {
+        display: inline-grid;
+        grid-template-columns:  repeat(2, 130px);
+        gap: 20px;
+        max-width: 600px;
+        margin: 20px auto;
+    }
+    .option,.new,.digits{
+        font-size: 32px;
+        padding: 25px;
+        background: #adadff;
+        border: 3px solid #9494ff;
+        border-radius: 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .option:hover,.new-hover,.digits:hover { background: #9494ff;
+    border: 3px solid #adadff; transform: scale(1.05); }
+    .correct { background: #90ee90 !important; border-color: #0a0 !important; }
+    .wrong { background: #ffcccc !important; border-color: #c00 !important; }
+    #feedback {
+        font-size: 28px;
+        margin: 20px;
+        min-height: 50px;
+    }
+   
+    @media (max-width: 600px) {
+        #equation { font-size: 42px; letter-spacing: 3px; }
+        #options { grid-template-columns: repeat(2, 130px); }
+        .option { font-size: 28px; }
+        body {
+            transform: scale(0.75);
+        transform-origin: top center;
+        }
+        #question {
+        display: flex;
+        text-align: center;
+        flex-direction: row;   
+        margin: 10px auto;
+    }
+    }
+</style>
+</head>
+<body>
+<h1>Carryeez!!<br>
+What two numbers must have resulted in making of the red number?</h1>
+    <div>
+<select id="digits">
+    <option value="2">2-Digit × 1-Digit</option>
+    <option value="3">3-Digit × 1-Digit</option>
+    <option value="4">4-Digit × 1-Digit</option>
+    <option value="5">5-Digit × 1-Digit</option>
+</select>
+<button id="new">⏭️⏭️l</button>
+</div>
+<div id="equation"></div>
+<div id="options"></div>
+<div id="question"></div>
+
+<script>
+const eqDiv = document.getElementById('equation');
+const qDiv = document.getElementById('question');
+const optsDiv = document.getElementById('options');
+const feedback = document.getElementById('feedback');
+const digitsSelect = document.getElementById('digits');
+const newBtn = document.getElementById('new');
+
+let currentDigits;
+let a, b, result;
+let compositeList = []; // array of {pos, unitsPartial, carryIn, writtenDigit}
+let currentIndex = 0;
+let nextBtn;
+
+function generateProblem() {
+    currentDigits = parseInt(digitsSelect.value);
+    compositeList = [];
+    currentIndex = 0;
+    
+    // Generate until we have at least one composite digit
+    while (compositeList.length === 0) {
+        a = getRandomNumber(currentDigits);
+        b = Math.floor(Math.random() * 9) + 1;
+        result = a * b;
+        
+        const aDigits = a.toString().split('').reverse().map(Number);
+        let carry = 0;
+        
+        for (let i = 0; i < aDigits.length; i++) {
+            const partial = b * aDigits[i];
+            const temp = partial + carry;
+            if (carry > 0) {
+                compositeList.push({
+                    pos: i,
+                    unitsPartial: partial % 10,
+                    carryIn: carry,
+                    writtenDigit: temp % 10
+                });
+            }
+            carry = Math.floor(temp / 10);
+        }
+        // If final carry creates extra digit but no addition used, ignore
+    }
+    
+    if (nextBtn) nextBtn.remove();
+    showCurrentDigit();
+}
+
+function showCurrentDigit() {
+    const paddedResult = result.toString().padStart(currentDigits + 1, ' ');
+    const resChars = paddedResult.split('');
+    const curr = compositeList[currentIndex];
+    const highlightIndex = paddedResult.length - 1 - curr.pos;
+    
+    const eqHTML = resChars.map((c, i) => 
+        i === highlightIndex ? `<span class="red-digit">${c}</span>` : c
+    ).join('');
+    qDiv.innerHTML = `‘‘‘${currentIndex+1}/${compositeList.length}’’’`;
+    eqDiv.innerHTML = `${a} × ${b} = ${eqHTML}`;
+    
+    
+    // Correct answer (sorted)
+    const x = curr.unitsPartial;
+    const y = curr.carryIn;
+    correctAnswer = `${Math.min(x,y)} + ${Math.max(x,y)}`;
+    
+    // Generate other real pairs that sum to writtenDigit
+    const realPairs = [];
+    for (let i = 0; i <= 9; i++) {
+        const j = curr.writtenDigit - i;
+        if (j >= 0 && j <= 9) {
+            const combo = `${Math.min(i,j)} + ${Math.max(i,j)}`;
+            if (combo !== correctAnswer) realPairs.push(combo);
+        }
+    }
+    
+    const closeFakes = [];
+    const tweaks = [1, -1, 2, -2,Math.floor(Math.random() * 9) + 1,Math.floor(Math.random() * 9) + 1];
+    for (let t of tweaks) {
+        const nx = Math.abs((x + t)%10);
+        const ny = Math.abs((y - t)%10); // keep sum same
+        const combo = `${Math.min(nx,ny)} + ${Math.max(nx,ny)}`;
+          if (combo !== correctAnswer && !                closeFakes.includes(combo)) {
+                closeFakes.push(combo);
+                if (closeFakes.length >= 3) break;
+            }
+    }
+    
+    const fakes = [...closeFakes.slice(0,3)];
+    const allOpts = [correctAnswer, ...fakes];
+    allOpts.sort(() => Math.random() - 0.5);
+    
+    optsDiv.innerHTML = '';
+    allOpts.forEach(opt => {
+        const div = document.createElement('div');
+        div.className = 'option';
+        div.textContent = opt;
+        div.onclick = () => checkAnswer(opt, div);
+        optsDiv.appendChild(div);
+    });
+    
+    if (window.autoTimer) clearTimeout(window.autoTimer);
+        newDiv.innerHTML='';
+}
+
+const newDiv = document.createElement('div');
+question.appendChild(newDiv);
+
+function checkAnswer(selected, el) {
+    const allOptions = optsDiv.querySelectorAll('.option');
+    
+    
+    // Allow clicking until correct is chosen
+    if (el.classList.contains('correct') || el.classList.contains('wrong')) return;
+    
+    if (selected === correctAnswer) {
+        // Mark correct
+        el.classList.add('correct');
+       // newDiv.innerHTML = ' LOVELY!';
+        // Lock all options
+        allOptions.forEach(opt => {
+            opt.style.pointerEvents = 'none';
+            if (opt !== el) opt.classList.add('wrong'); // optional: dim wrongs
+        });
+        
+        // Auto next after 3 sec timeout
+        window.autoTimer = setTimeout(() => {
+            if (currentIndex < compositeList.length - 1) {
+                newDiv.innerHTML = ' LOVELY!';
+                currentIndex++;
+                showCurrentDigit();
+            } else {
+                newDiv.textContent = 'LOVELY! Flow Next...';
+                setTimeout(generateProblem, 2000); // extra pause for celebration
+            }
+        }, 3000);
+        
+    } else {
+        // Wrong: just mark red, keep clicking allowed
+        el.classList.add('wrong');
+        newDiv.innerHTML = 'Nah blud, hit the gym';
+    }
+    question.appendChild(newDiv)
+}
+
+function getRandomNumber(digits) {
+    const min = Math.pow(10, digits - 1);
+    const max = Math.pow(10, digits) - 1;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+newBtn.onclick = generateProblem;
+digitsSelect.onchange = generateProblem;
+generateProblem();
+</script>
+</body>
+</html>

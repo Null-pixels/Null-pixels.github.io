@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Major System Mnemonic Operations Matching Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color:  #000;
+            text-align: center;
+            margin: 0;
+            padding: 20px 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff; /* white text for pop on dark bg */
+        }
+        h1 { color: #ffd700; font-size: 24px; margin: 10px 0; text-shadow: 0 0 4px #ff8c00; } /* gold-yellow with orange glow */
+        .instructions { max-width: 90%; margin: 15px auto; font-size: 16px; color: #e6e6fa; } /* lavender tint for readability */
+        #controls { margin: 15px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            background: linear-gradient(45deg, rgba(105,10,11,0.8), #D10202); /* orange to yellow fiery gradient */
+            color: #fff; /* deep purple text */
+            box-shadow: 0 4px 15px #AB7209;
+            transition: all 0.3s ease;
+        }
+        button:hover { 
+            background: linear-gradient(45deg, #D10202, rgba(105,10,11,0.8)); 
+            transform: translateY(-3px);
+            box-shadow: 0 0 10px #AB7209, 0 8px 25px rgba(255, 165, 0, 0.8); /* neon orange glow hover */
+        }
+        #message { font-size: 22px; margin: 15px; min-height: 40px; color: #ffd700; font-weight: bold; text-shadow: 0 0 5px #ff4500; } /* gold with orange-red glow */
+
+        #board-wrapper {
+            width: fit-content;
+            margin: 20px auto;
+            transform-origin: top center;
+        }
+
+        #game-area {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(70px,1fr));
+            gap: 12px;
+            padding: 15px;
+            background: linear-gradient(145deg, rgba(20,1,11,0.4), rgba(20,30,11,0.6)); /* translucent violet overlay */
+            border-radius: 5px;
+            box-shadow: 0 8px 32px rgba(20,1,11,0.8), inset 0 0 30px rgba(255,140,0,0.2); /* purple outer + subtle orange inner glow */
+            justify-content: center;
+            backdrop-filter: blur(5px); /* glassy alive feel */
+        }
+
+        .tile {
+            width: 100%;
+            padding-bottom: 100%;
+            border: 0px solid #ff8c00; /* orange border base */
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 2px 2px rgba(0,0,0,0.5), 0 0 10px rgba(255,140,0,0.3); /* base orange subtle glow */
+            user-select: none;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            background: linear-gradient(135deg, rgba(20,1,11,0.7), rgba(100,75,50,0.7)); /* violet-purple tile base */
+        }
+
+        .tile-content {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            box-sizing: border-box;
+            gap: 4px;
+        }
+
+        .word { 
+            font-weight: bold; 
+            font-size: 22px; 
+            text-align: center;
+            word-wrap: break-word;
+            color: #FdFFfb; /* gold-yellow words */
+            text-shadow: 0 0 4px #AB7209; /* orange glow on text */
+        }
+        .operator { 
+            font-size: 20px; 
+            margin: 5px 0; 
+            font-weight: 900; 
+            min-height: 5px;
+            display: flex;
+            align-items: center;
+            color: #FFCF75; /* orange-red op */
+            text-shadow: 0 0 .1px #000; /* yellow glow */
+        }
+
+        .multi-digit {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .number-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            color: #fff; /* white numbers for stark contrast */
+            font-weight: bold;
+            font-size: 20px;
+            gap: 4px;
+            padding: 8px;
+            box-sizing: border-box;
+            text-shadow: 0 0 10px #ff8c00; /* orange glow on faint numbers */
+        }
+
+        .number-overlay.visible {
+            opacity: 0.85; /* strong but overlay vibe */
+        }
+        .number-overlay .num-word {
+            font-size: 18px;
+        }
+
+        .words-layer {
+            position: relative;
+            z-index: 2;
+            transition: opacity 0.3s ease;
+        }
+
+        .words-layer.faded {
+            opacity: 0.4; /* deeper fade for drama */
+        }
+            
+        #info-panel {
+            transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.4s ease;
+            max-height: 300px;
+            opacity: 1;
+            overflow: hidden;
+            margin-bottom: 15px;
+            background: rgba(75,0,130,0.3); /* subtle purple panel */
+            border-radius: 10px;
+            padding: 10px;
+        }
+        #info-panel.hidden {
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0;
+        }
+
+        .white { background: linear-gradient(135deg, rgba(235,106,114,0.8), rgba(230,200,202,0.8)) !important; } /* violet checker */
+        .black { background: linear-gradient(135deg, rgba(105,1,11,0.8), rgba(186,11,12,0.8)) !important; } /* deeper purple checker */
+
+        .selected { 
+            border: .5px solid #ffd700; /* gold border */
+            background-color: rgba(255,165,0,0.4) !important; /* orange tint overlay */
+            transform: scale(1.05);
+            box-shadow: 0 0 30px #ff8c00, 0 0 60px #ffd700, 0 0 90px rgba(255,140,0,0.8) !important; /* multi-layer neon orange-yellow pulsatin' glow */
+            animation: pulseGlow 1.5s infinite alternate;
+            z-index: 10;
+        }
+
+        @keyframes pulseGlow {
+            from { box-shadow: 0 0 20px #ff8c00, 0 0 40px #ffd700; }
+            to { box-shadow: 0 0 40px #ff8c00, 0 0 80px #ffd700, 0 0 120px rgba(255,165,0,0.9); }
+        }
+
+        .matched { opacity: 0.5; cursor: default; border-color: #ffd700; box-shadow: 0 0 20px #ff4500; } /* final orange-red glow */
+
+        #celebration-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(75,0,130,0.8); /* deep purple overlay */
+            display: flex; align-items: center; justify-content: center;
+            pointer-events: none; opacity: 0; transition: opacity 0.3s ease; z-index: 1000;
+        }
+        #celebration-content { font-size: 120px; font-weight: bold; color: #ffd700; opacity: 0; text-align: center; text-shadow: 0 0 30px #ff8c00, 0 0 60px #ffa500; } /* massive yellow-orange glow */
+
+        @media (max-width: 600px) {
+            .word { font-size: 15px; }
+            .operator { font-size: 15px; }
+            .number-overlay { font-size: 16px; }
+            #celebration-content { font-size: 80px; }
+            #game-area { grid-template-columns: repeat(5, minmax(60px,1fr)); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Major System Mnemonic Operations Matching Game</h1>
+    <div id="info-panel" class="hidden">
+        <div class="instructions">
+        Tap two tiles with the same result mnemonic to match & lock.<br>
+        Operations include + − × on 1-2 digit numbers, results up to 999.<br>
+        All numbers shown as vivid Major System peg words. Match the result, legend!
+        <div id="message"></div></div>
+    </div>
+    
+    <div id="controls">
+        <button id="hide-info-btn">↓↓</button>    
+        <button id="op-toggle">Operator Change</button>
+        <button id="reset-btn">↩️</button>
+        
+    </div>
+
+    <div id="board-wrapper">
+        <div id="game-area"></div>
+        
+    </div>
+
+    <div id="celebration-overlay">
+        <div id="celebration-content"></div>
+    </div>
+
+    <script>
+        // Standard Major System peg words 0-999 (common vivid list compiled from popular sources)
+        const pegs = [
+            "saw", "tie", "noah", "ma", "rye", "law", "jaw", "key", "fee", "bee",  // 0-9
+            "toes", "tot", "tin", "tomb", "tire", "towel", "dish", "tack", "dove", "tub",  // 10-19
+            "nose", "net", "nail", "enemy", "nero", "nail", "nachos", "neck", "knife", "nip",  // 20-29
+            "moss", "mat", "moon", "mummy", "mower", "mail", "midge", "mike", "movie", "map",  // 30-39
+            "rose", "rod", "rain", "ram", "rower", "reel", "roach", "rock", "roof", "rib",  // 40-49
+            "lace", "lot", "lion", "lamb", "lily", "leash", "ledge", "lock", "leaf", "lip",  // 50-59
+            "cheese", "sheet", "chain", "jam", "cherry", "jail", "judge", "chalk", "chef", "chip",  // 60-69
+            "goose", "cat", "coin", "comb", "car", "coal", "cage", "cake", "coffee", "cob",  // 70-79
+            "vase", "foot", "phone", "foam", "fire", "file", "fish", "fudge", "fife", "fib",  // 80-89
+            "bus", "bat", "pan", "bomb", "bar", "bell", "beach", "book", "puff", "pipe"   // 90-99
+        ];
+        
+        const pegOptions = {
+    0: ["saw", "sow", "zoo"],
+    1: ["tie", "toe", "hat"],
+    2: ["noah", "knee", "hen"],
+    3: ["ma", "mow", "mummy"],
+    4: ["rye", "row", "hero"],
+    5: ["law", "lee", "hill"],
+    6: ["jaw", "shoe", "chew"],
+    7: ["key", "cow", "hook"],
+    8: ["ivy", "fee", "fife"],
+    9: ["bee", "pie", "pub"],
+    10: ["toes", "dice", "daisy"],
+    11: ["tot", "tutu", "dad"],
+    12: ["tin", "ton", "dune"],
+    13: ["tomb", "team", "dam"],
+    14: ["tire", "tower", "tar"],
+    15: ["towel", "tail", "hotel"],
+    16: ["dish", "dash", "tissue"],
+    17: ["tack", "duck", "dog"],
+    18: ["dove", "tv", "daffodil"],
+    19: ["tub", "tape", "top"],
+    20: ["nose", "nasa", "niece"],
+    21: ["net", "nut", "ant"],
+    22: ["nun", "onion", "nanny"],
+    23: ["gnome", "name", "anime"],
+    24: ["nero", "nail", "owner"],
+    25: ["nail", "lion", "knee"]    };
+
+        // Extend to 100-999 by treating as 00-99 prefixed, but for simplicity we use 0-99 for all (covers up to 99 fine, higher use same)
+        // For 100+ we split digits and show multiple words (e.g. 123 -> tin + nose + ma)
+        function getRandomPeg(n) {
+    const options = pegOptions[n];
+    return options[Math.floor(Math.random() * options.length)];
+}
+        function numberToPegs(n) {
+            if (n === 0) return [getRandomPeg(n)];
+            const words = [];
+            const str = n.toString();
+            if (n <= 25) {
+                words.push(getRandomPeg(n));
+            } else if (str.length === 2) {
+                words.push(pegs[n]);
+            } else { // 3 digits
+                words.push(getRandomPeg(Math.floor(n/100)));
+                words.push(pegs[n % 100]);
+            }
+            return words;
+        }
+
+        function showFaintNumbers(tileDiv) {
+        const overlays = tileDiv.querySelectorAll('.number-overlay');
+        overlays.forEach(o => o.classList.add('visible'));
+        const wordsLayer = tileDiv.querySelectorAll('.words-layer');
+        wordsLayer.forEach(layer => layer.classList.add('faded'));
+        }
+
+        function hideFaintNumbers(tileDiv) {
+        const overlays = tileDiv.querySelectorAll('.number-overlay');
+        overlays.forEach(o => o.classList.remove('visible'));
+        const wordsLayer = tileDiv.querySelectorAll('.words-layer');
+        wordsLayer.forEach(layer => layer.classList.remove('faded'));
+        }
+        function createWordDisplay(words,number = null) {
+            
+            const container = document.createElement('div');
+            container.style.position = 'relative'; // for overlay positioning
+            if (words.length > 1) {
+        container.className = 'multi-digit';
+            }
+
+            // Mnemonic words on top
+            const wordsDiv = document.createElement('div');
+            wordsDiv.className = 'words-layer';
+            wordsDiv.style.position = 'relative';
+            wordsDiv.style.zIndex = 2;
+            words.forEach(w => {
+                const div = document.createElement('div');
+                div.className = 'word';
+                div.textContent = w;
+                wordsDiv.appendChild(div);
+            });
+            container.appendChild(wordsDiv);
+
+   if (number !== null) { 
+   
+           const overlay = document.createElement('div');
+        overlay.className = 'number-overlay';
+
+        const displayNum = number === 0 ? '0' : number;  // force zero visible
+        
+        if (number >= 100) {
+        
+            const hundreds = Math.floor(number / 100);
+            const rest = number % 100;
+            if (hundreds > 0) { 
+            const hDiv = document.createElement('div');
+                hDiv.className = 'num-word';
+                hDiv.textContent = hundreds;
+                overlay.appendChild(hDiv);
+            }
+            const rDiv = document.createElement('div');
+            rDiv.className = 'num-word';
+            rDiv.textContent = rest.toString().padStart(2, '0');
+            overlay.appendChild(rDiv);
+        } else {
+            const nDiv = document.createElement('div');
+            nDiv.className = 'num-word';
+            nDiv.textContent = displayNum;
+            overlay.appendChild(nDiv);
+        } 
+        container.appendChild(overlay);
+    } 
+    return container;
+        }
+
+        let operations = ['+', '−', '×']; // current set
+        let currentOpIndex = 0;
+
+        function generateTiles() {
+            const op = operations[currentOpIndex];
+            const allPossible = [];
+            let maxA = 99, maxB = 99;
+
+            if (op === '×') { maxA = 30; maxB = 30; } // keep results reasonable <1000
+
+            for (let a = 1; a <= maxA; a++) { // start from 1 to avoid zero issues
+                for (let b = 1; b <= maxB; b++) {
+                    let result;
+                    if (op === '+') result = a + b;
+                    else if (op === '−') result = (a >= b ? a - b : 0); // no negative
+                    else result = a * b;
+
+                    if (result > 999) continue;
+
+                    allPossible.push({ type: 'operation', values: [a, b], operator: op, result });
+                }
+            }
+
+            const selected = [];
+            const used = new Set();
+            while (selected.length < 49 && used.size < allPossible.length) {
+                const idx = Math.floor(Math.random() * allPossible.length);
+                if (!used.has(idx)) {
+                    used.add(idx);
+                    selected.push(allPossible[idx]);
+                }
+            }
+
+            const resultCounts = {};
+            selected.forEach(t => resultCounts[t.result] = (resultCounts[t.result] || 0) + 1);
+
+            const tiles = [...selected];
+            Object.keys(resultCounts).forEach(r => {
+                if (resultCounts[r] % 2 === 1 && +r !== 0) {
+                    tiles.push({ type: 'result', value: +r, result: +r });
+                }
+            });
+
+            return tiles;
+        }
+
+        let tiles = generateTiles();
+        let tileElements = [];
+
+        function mildShuffle() {
+            tiles.sort((a, b) => a.result - b.result);
+            for (let i = 0; i < tiles.length; i += 10) {
+                const chunk = tiles.slice(i, i + 10);
+                for (let j = chunk.length - 1; j > 0; j--) {
+                    const k = Math.floor(Math.random() * (j + 1));
+                    [chunk[j], chunk[k]] = [chunk[k], chunk[j]];
+                }
+                tiles.splice(i, 10, ...chunk);
+            }
+            for (let i = tiles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+            }
+        }
+
+        function renderTileContent(tile) {
+            const content = document.createElement('div');
+            content.className = 'tile-content';
+
+            if (tile.type === 'operation') {
+                content.appendChild(createWordDisplay(numberToPegs(tile.values[0]), tile.values[0]));
+                const opDiv = document.createElement('div');
+                opDiv.className = 'operator';
+                opDiv.textContent = tile.operator;
+                content.appendChild(opDiv);
+                content.appendChild(createWordDisplay(numberToPegs(tile.values[1]), tile.values[1]));
+            } else {
+                content.appendChild(createWordDisplay(numberToPegs(tile.value),tile.value));
+            }
+            return content;
+        }
+
+        function renderBoard() {
+            const gameArea = document.getElementById('game-area');
+            gameArea.innerHTML = '';
+            tileElements = [];
+
+            tiles.forEach((tile, index) => {
+                const div = document.createElement('div');
+                div.classList.add('tile');
+                const row = Math.floor(index / 5);
+                const col = index % 5;
+                if ((row + col) % 2 === 0) {
+                    div.classList.add('black');
+                } else {
+                    div.classList.add('white');
+                }
+
+                div.appendChild(renderTileContent(tile));
+
+                div.dataset.index = index;
+                div.addEventListener('click', handleClick);
+                gameArea.appendChild(div);
+                tileElements.push(div);
+            });
+        }
+
+        function celebrateMatch(words) {
+            const overlay = document.getElementById('celebration-overlay');
+            const celeContent = document.getElementById('celebration-content');
+            celeContent.innerHTML = '';
+            const container = document.createElement('div');
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.gap = '10px';
+            words.forEach(w => {
+                const div = document.createElement('div');
+                div.textContent = w.toUpperCase();
+                container.appendChild(div);
+            });
+            celeContent.appendChild(container);
+
+            overlay.style.opacity = 1;
+            celeContent.style.opacity = 1;
+
+            setTimeout(() => {
+                overlay.style.opacity = 0;
+                celeContent.style.opacity = 0;
+            }, 1000);
+        }
+
+        let firstSelected = null;
+        let matchedCount = 0;
+        let totalPairs = tiles.length / 2;
+
+        function handleClick(e) {
+            const tileDiv = e.currentTarget;
+            if (tileDiv.classList.contains('matched')) return;
+
+            const index = parseInt(tileDiv.dataset.index);
+            if (firstSelected === index) return;
+
+            const tile = tiles[index];
+
+            if (firstSelected === null) {
+                firstSelected = index;
+                tileDiv.classList.add('selected');
+                showFaintNumbers(tileDiv); 
+                document.getElementById('message').textContent = 'Now tap another with same result mnemonic!';
+            } else {
+                const firstTile = tiles[firstSelected];
+                const firstDiv = tileElements[firstSelected];
+
+                if (firstTile.result === tile.result) {
+                    tileDiv.classList.add('matched');
+                    firstDiv.classList.add('matched');
+                    firstDiv.classList.remove('selected');
+                    showFaintNumbers(tileDiv);     // pop faint on second briefly
+                    hideFaintNumbers(firstDiv); 
+                    matchedCount++;
+                    document.getElementById('message').textContent = 'MATCH LOCKED! BRAIN ROT ACTIVATED!';
+                    celebrateMatch(numberToPegs(firstTile.result));
+
+                       setTimeout(() => {
+                            hideFaintNumbers(tileDiv);
+                        }, 800);
+                    if (matchedCount === totalPairs) {
+                        setTimeout(() => {
+                            celebrateMatch(["GOAT"]);
+                            document.getElementById('message').textContent = 'BOARD CLEARED! YOU ARE THE MNEMONIC GOAT!';
+                        }, 400);
+                    }
+                } else {
+                    document.getElementById('message').textContent = 'NOPE, WRONG RESULT BRUH';
+                    tileDiv.classList.add('selected');
+                    showFaintNumbers(tileDiv);
+                    setTimeout(() => {
+                        tileDiv.classList.remove('selected');
+                        hideFaintNumbers(tileDiv);
+                        firstDiv.classList.remove('selected');
+                        hideFaintNumbers(firstDiv);
+                        document.getElementById('message').textContent = '';
+                    }, 1200);
+                }
+                firstSelected = null;
+            }
+        }
+
+        document.getElementById('op-toggle').addEventListener('click', () => {
+            currentOpIndex = (currentOpIndex + 1) % 3;
+            const opsNames = ['Plus ', 'Minus', 'Cross'];
+            document.getElementById('op-toggle').textContent = `Operator ${opsNames[(currentOpIndex + 1) % 3]}`;
+            tiles = generateTiles();
+            totalPairs = tiles.length / 2;
+            mildShuffle();
+            firstSelected = null;
+            matchedCount = 0;
+            document.getElementById('message').textContent = '';
+            renderBoard();
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            mildShuffle();
+            firstSelected = null;
+            matchedCount = 0;
+            document.getElementById('message').textContent = '';
+            renderBoard();
+        });
+
+        mildShuffle();
+        renderBoard();
+        const infoPanel = document.getElementById('info-panel');
+const hideBtn = document.getElementById('hide-info-btn');
+
+hideBtn.addEventListener('click', () => {
+    infoPanel.classList.toggle('hidden');
+    if (infoPanel.classList.contains('hidden')) {
+        hideBtn.textContent = '↓↓';
+        hideBtn.classList.add('active');
+    } else {
+        hideBtn.textContent = '↑↑';
+        hideBtn.classList.remove('active');
+    }
+});
+    </script>
+</body>
+</html>

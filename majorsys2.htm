@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sticks Fingers Addition / Subtraction Matching Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            text-align: center;
+            margin: 0;
+            padding: 20px 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 { color: #000; font-size: 24px; margin: 10px 0; text-shadow: 0 0 4px #adadff; }
+        .instructions { max-width: 90%; margin: 15px auto; font-size: 16px; color: #e6e6fa; }
+        #controls { margin: 15px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            background: linear-gradient(45deg, #9494ff, #9494ff, #adadff);
+            color: #060606;
+            box-shadow: 0 4px 15px rgba(255,225,210, 0.6);
+            transition: all 0.3s ease;
+        }
+        button:hover { 
+            background: linear-gradient(45deg, #adadff, #aeaeff); 
+            transform: translateY(-3px);
+            box-shadow: 0 0 10px #ababff, 0 8px 25px rgba(255, 225, 210, 0.8);
+        }
+        #message { font-size: 15px; margin: 5px; min-height: 17px; color: #ff8c05; font-weight: bold; }
+
+        #board-wrapper {
+            width: fit-content;
+            margin: 20px auto;
+        }
+
+        #game-area {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(600px,1fr));
+            gap: 15px;
+            padding: 20px;
+            background: linear-gradient(145deg, rgba(244,220,255,0.4), rgba(200,190,190,0.6));
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .tile {
+            width: 100%;
+            height: 70px;
+            border: 1.5px solid #d2f8d2;
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            user-select: none;
+            overflow: hidden;
+            background: linear-gradient(145deg, rgba(220,250,220,0.4), rgba(55,100,124,0.6));            
+        }
+
+        .tile-content {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;            
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        .hand {
+            display: flex;
+            align-items: baseline ;
+            gap: 2px;
+        }
+
+        .stick {
+            width: 4px;
+            height: 10px;
+            background-color: transparent;
+            border: 1.2px solid #000;
+            border-radius: 3px;
+        }
+
+        .thumb {
+            width: 4.5px;
+            background-color: #transparen;
+            height: 5px;
+            border-color: #000;
+        }
+
+        .pressed-finger {
+            background-color: #ff0;
+            height: 32px;
+            border-color: #000;
+        }
+
+        .pressed-thumb {
+            background-color: #ff0;
+            height: 14px;
+            border-color: #000;
+        }
+
+        .operator {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0 2px; /* minimal tight */
+            line-height: 1;
+        }
+
+        .separator {
+            font-size: 16px;
+            margin: 0 10px;
+            opacity: 0.6;
+            line-height: 1;
+        }
+
+        .single-hand-wrapper {
+            transform: scale(1.4);
+        }
+
+        .white { background: linear-gradient(135deg, rgba(186,220,211,0.9), rgba(220,250,220,1)) !important; } 
+        .black { background: linear-gradient(135deg, rgba(55,100,134,0.8), rgba(95,150,135,0.8)) !important; }
+
+        .selected { 
+            border: 1.5px solid #d2f8d2;
+            background-color: #90ee90;
+            transform: scale(1.05);
+            box-shadow: 0 0 30px #2F6696, 0 0 60px #d2f8d2, 0 0 90px rgba(210,255,210,0.8) !important;
+            animation: pulseGlow 1.5s infinite alternate;
+            z-index: 10;
+        }
+
+        @keyframes pulseGlow {
+            from { box-shadow: 0 0 20px #2F6696, 0 0 40px #d2f8d2; }
+            to { box-shadow: 0 0 40px #2F6696, 0 0 80px #d2f8d2, 0 0 120px rgba(210,233,210,0.9); }
+        }
+
+        .matched { opacity: 0.4; cursor: default; border-color: #0a0; }
+
+        #celebration-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(0,0,0,0.6);
+            display: flex; align-items: center; justify-content: center;
+            pointer-events: none; opacity: 0; transition: opacity 0.3s ease; z-index: 1000;
+        }
+        #celebration-content { font-size: 90px; font-weight: bold; color: white; opacity: 0; text-align: center; }
+
+        @media (max-width: 900px) {
+            #game-area { grid-template-columns: repeat(auto, minmax(160px,1fr)); }
+            .tile { height: 60px; }
+            .operator { font-size: 10px; }
+            .single-hand-wrapper { transform: scale(1); }
+        }
+
+        @media (max-width: 600px) {
+           #game-area { grid-template-columns: repeat(2, minmax(120px,1fr)); }
+                 }
+    </style>
+</head>
+<body>
+    <h1>Sticks Fingers Addition / Subtraction Matching Game</h1>
+    <div id="instructions">
+        Tap two tiles with the same result to match & lock.<br>
+        Vertical sticks: black for fingers (1), smaller red for thumbs (5), hollow when closed.<br>
+        30 tiles, fresh mix every time.<br>
+        <p id="message"></p>
+    </div>
+    
+    <div id="controls" class="instructions">
+        <button id="mode-toggle">operand(-)</button>
+        <button id="reset-btn">↩️</button>
+    </div>
+
+    <div id="board-wrapper">
+        <div id="game-area"></div>
+    </div>
+
+    <div id="celebration-overlay">
+        <div id="celebration-content">MATCH!</div>
+    </div>
+
+    <script>
+        let mode = 'addition';
+
+        function createHand(num, ifSec) {
+            const hand = document.createElement('div');
+            hand.className = 'hand';
+
+            let thumbPressed = false;
+            let fingersPressed = num;
+
+            if (num >= 5) {
+                thumbPressed = true;
+                fingersPressed = num - 5;
+            }
+            
+            const thumb = document.createElement('div');
+            thumb.className = 'stick thumb';
+
+            if(ifSec) {      
+            if (thumbPressed) thumb.classList.add('pressed-thumb');
+            hand.appendChild(thumb);  
+            for (let i = 0; i < 4; i++) {
+                const stick = document.createElement('div');
+                stick.className = 'stick';
+                if (i < fingersPressed) stick.classList.add('pressed-finger');
+                hand.appendChild(stick);
+            }
+            } else {
+            // 4 fingers
+            for (let i = 3; i >=0; i--) {
+                const stick = document.createElement('div');
+                stick.className = 'stick';
+                if (i < fingersPressed) stick.classList.add('pressed-finger');
+                hand.appendChild(stick);}
+     
+            if (thumbPressed) thumb.classList.add('pressed-thumb');
+            hand.appendChild(thumb);  
+            }
+
+            
+
+            return hand;
+        }
+
+        function renderTileContent(tile) {
+            const content = document.createElement('div');
+            content.className = 'tile-content';
+
+            if (tile.type === 'operation') {
+                content.appendChild(createHand(tile.values[0],false));
+                const op = document.createElement('div');
+                op.className = 'operator';
+                op.textContent = tile.operator;
+                content.appendChild(op);
+                content.appendChild(createHand(tile.values[1],true));
+            } else {
+                const result = tile.value;
+                if (result < 10) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'single-hand-wrapper';
+                    wrapper.appendChild(createHand(result,true));
+                    content.appendChild(wrapper);
+                } else {
+                    content.appendChild(createHand(Math.floor(result / 10)));
+                    const sep = document.createElement('div');
+                    sep.className = 'separator';
+                    sep.textContent = '|';
+                    content.appendChild(sep);
+                    content.appendChild(createHand(result % 10,true));
+                }
+            }
+            return content;
+        }
+
+        // generateTiles, shuffle, renderBoard, handleClick, etc. remain the same as previous version
+
+        function generateTiles() {
+            const allPossible = [];
+            for (let a = 0; a <= 9; a++) {
+                for (let b = 0; b <= 9; b++) {
+                    const result = mode === 'addition' ? a + b : (a >= b ? a - b : 10 + a - b);
+                    allPossible.push({ type: 'operation', values: [a, b], operator: mode === 'addition' ? '+' : '−', result });
+                }
+            }
+
+            const selected = [];
+            const used = new Set();
+            while (selected.length < 29 && used.size < allPossible.length) {
+                const idx = Math.floor(Math.random() * allPossible.length);
+                if (!used.has(idx)) {
+                    used.add(idx);
+                    selected.push(allPossible[idx]);
+                }
+            }
+
+            const resultCounts = {};
+            selected.forEach(t => resultCounts[t.result] = (resultCounts[t.result] || 0) + 1);
+
+            const tiles = [...selected];
+            Object.keys(resultCounts).forEach(r => {
+                if (resultCounts[r] % 2 === 1) {
+                    tiles.push({ type: 'result', value: +r, result: +r });
+                }
+            });
+
+            return tiles;
+        }
+
+        let tiles = generateTiles();
+        let tileElements = [];
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function mildShuffle() {
+            tiles.sort((a, b) => a.result - b.result);
+            for (let i = 0; i < tiles.length; i += 8) {
+                const chunk = tiles.slice(i, i + 8);
+                shuffle(chunk);
+                tiles.splice(i, 8, ...chunk);
+            }
+            shuffle(tiles);
+        }
+
+        function renderBoard() {
+            const gameArea = document.getElementById('game-area');
+            gameArea.innerHTML = '';
+            tileElements = [];
+
+            tiles.forEach((tile, index) => {
+                const div = document.createElement('div');
+                div.classList.add('tile');
+                const row = Math.floor(index / 4);
+                const col = index % 4;
+                if ((row + col) % 2 === 0) {
+                    div.classList.add('black');
+                } else {
+                    div.classList.add('white');
+                }
+
+                div.appendChild(renderTileContent(tile));
+
+                div.dataset.index = index;
+                div.addEventListener('click', handleClick);
+                gameArea.appendChild(div);
+                tileElements.push(div);
+            });
+        }
+
+        function celebrateMatch() {
+            const overlay = document.getElementById('celebration-overlay');
+            const celeContent = document.getElementById('celebration-content');
+            celeContent.textContent = 'MATCH!';
+
+            overlay.style.opacity = 1;
+            void overlay.offsetWidth;
+            celeContent.style.opacity = 1;
+
+            setTimeout(() => {
+                overlay.style.opacity = 0;
+                celeContent.style.opacity = 0;
+            }, 800);
+        }
+
+        let firstSelected = null;
+        let matchedCount = 0;
+        let totalPairs = tiles.length / 2;
+
+        function handleClick(e) {
+            const tileDiv = e.currentTarget;
+            if (tileDiv.classList.contains('matched')) return;
+
+            const index = parseInt(tileDiv.dataset.index);
+            if (firstSelected === index) return;
+
+            if (firstSelected === null) {
+                firstSelected = index;
+                tileDiv.classList.add('selected');
+                document.getElementById('message').textContent = 'Now tap another with same result!';
+            } else {
+                const firstTile = tiles[firstSelected];
+                const firstDiv = tileElements[firstSelected];
+
+                if (firstTile.result === tiles[index].result) {
+                    tileDiv.classList.add('matched');
+                    firstDiv.classList.add('matched');
+                    firstDiv.classList.remove('selected');
+                    matchedCount++;
+                    document.getElementById('message').textContent = 'MATCH LOCKED! FIRE!';
+                    celebrateMatch();
+
+                    if (matchedCount === totalPairs) {
+                        setTimeout(() => {
+                            document.getElementById('celebration-content').textContent = 'GOAT';
+                            overlay.style.opacity = 1;
+                            celeContent.style.opacity = 1;
+                            document.getElementById('message').textContent = 'BOARD CLEARED! YOU ARE THE GOAT!';
+                            setTimeout(() => {
+                                overlay.style.opacity = 0;
+                                celeContent.style.opacity = 0;
+                            }, 1500);
+                        }, 300);
+                    }
+                } else {
+                    document.getElementById('message').textContent = 'NOPE, WRONG RESULT BRUH';
+                    tileDiv.classList.add('selected');
+                    setTimeout(() => {
+                        tileDiv.classList.remove('selected');
+                        firstDiv.classList.remove('selected');
+                        document.getElementById('message').textContent = '';
+                    }, 1200);
+                }
+                firstSelected = null;
+            }
+        }
+
+        document.getElementById('mode-toggle').addEventListener('click', () => {
+            mode = mode === 'addition' ? 'subtraction' : 'addition';
+            document.getElementById('mode-toggle').textContent = mode === 'addition' ? 'operand(-)' : 'operand(+)';
+            tiles = generateTiles();
+            totalPairs = tiles.length / 2;
+            mildShuffle();
+            firstSelected = null;
+            matchedCount = 0;
+            document.getElementById('message').textContent = '';
+            renderBoard();
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            mildShuffle();
+            firstSelected = null;
+            matchedCount = 0;
+            document.getElementById('message').textContent = '';
+            renderBoard();
+        });
+
+        mildShuffle();
+        renderBoard();
+    </script>
+</body>
+</html>

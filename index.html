@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Number Matching Chaos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            text-align: center;
+            margin: 0;
+            padding: 20px 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 { color: #333; font-size: 24px; margin: 10px 0; }
+        #instructions { max-width: 90%; margin: 15px auto; font-size: 16px; color: #555; }
+        #controls { margin: 15px; }
+        #mode-toggle, #reset-btn {
+            padding: 10px 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+        #mode-toggle { background-color: #2196f3; color: white; }
+        #mode-toggle:hover { background-color: #1e88e5; }
+        #reset-btn { background-color: #4caf50; color: white; }
+        #reset-btn:hover { background-color: #45a049; }
+        #message { font-size: 22px; margin: 15px; min-height: 40px; color: #d00; font-weight: bold; }
+
+        #board-wrapper {
+            width: fit-content;
+            margin: 20px auto;
+        }
+
+        #game-area {
+            display: grid;
+            grid-template-columns: repeat(6, 80px);
+            gap: 10px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            justify-content: center;
+            overflow: auto;
+        }
+
+        .tile {
+            width: 100%; 
+            height: fit-content;
+            padding-bottom: 100%;
+            border: 2px solid #000;
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            user-select: none;
+            overflow: hidden;
+        }
+
+        .tile-content {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            padding: 5px;
+            white-space: normal; 
+            word-wrap: break-word;
+            text-align: center;
+            box-sizing: border-box;
+            font-size: 12px;
+            line-height: 1;
+        }
+
+        .distraction { color: #900;font-size: 12px; } /* hundreds/tens red ng+7 sauce */
+        .unit {
+                color: black; font-size: 14px; }
+
+        .operator { font-size: 1px; margin: 0px 0; }
+
+        /* CSS checkerboard for 6 columns */
+        .tile:nth-child(5n+1), .tile:nth-child(5n+3) { background-color: #fffdd0; }
+        .tile:nth-child(5n+2), .tile:nth-child(5n+4){ background-color: #e0ffe0; }
+
+        .selected { border: 4px solid #90EE90; }
+        .matched { opacity: 0.4; cursor: default; border-color: #0a0; }
+
+        #celebration-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(0,0,0,0.6);
+            display: flex; align-items: center; justify-content: center;
+            pointer-events: none; opacity: 0; transition: opacity 0.3s ease; z-index: 1000;
+        }
+        #celebration-number { font-size: 120px; font-weight: bold; color: white; opacity: 0; }
+
+        @media (max-width: 500px) {
+            #game-area { grid-template-columns: repeat(4, 80px); gap: 6px; padding: 10px; }
+            .tile-content { font-size: 10px; }
+            .unit { font-size: 12px; }
+            #celebration-number { font-size: 90px; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Word Number Matching Chaos</h1>
+    <div id="instructions">
+        Match tiles with same real sum (ignore big red distraction words).<br>
+        Visual numbers 0-999 in English, but only unit digits matter.<br>
+        Subtraction borrows. Unit digit flashes on match. Clear the board, legend!
+    </div>
+    <div id="message"></div>
+    <div id="controls">
+        <button id="mode-toggle">Switch to Subtraction</button>
+        <button id="reset-btn">Shuffle & Restart</button>
+    </div>
+
+    <div id="board-wrapper">
+        <div id="game-area"></div>
+    </div>
+
+    <div id="celebration-overlay">
+        <div id="celebration-number"></div>
+    </div>
+
+    <script>
+        const wordNumbers = ["zero","one","two","three","four","five","six","seven","eight","nine","ten",
+            "eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"];
+        const tensWords = ["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"];
+        const hundredsWord = ["","one hundred","two hundred","three hundred","four hundred","five hundred","six hundred","seven hundred","eight hundred","nine hundred"];
+
+        function numberToWords(n) {
+            if (n < 20) return wordNumbers[n];
+            if (n < 100) {
+                let str = tensWords[Math.floor(n/10)];
+                if (n % 10 > 0) {
+                str += "" + wordNumbers[n % 10]; 
+                } return str;}
+            return hundredsWord[Math.floor(n/100)] + (n%100 ? " " + numberToWords(n%100) : "");
+        }
+
+        function randomBigNumber(unitDigit) {
+            const hundreds = Math.floor(Math.random() * 10);
+            const tens = Math.floor(Math.random() * 10);
+            return hundreds * 100 + tens * 10 + unitDigit;
+        }
+
+        function createWordSpan(text, isUnit = false) {
+            const span = document.createElement('span');
+            span.textContent = text;
+            if (!isUnit) span.classList.add('distraction');
+            else span.classList.add('unit');
+            return span;
+        }
+
+       function renderNumberWord(num, container, isUnitOnly = false) {
+    if (num === 0) {
+        container.appendChild(createWordSpan('zero', true));
+        return;
+    }
+
+    let hundredsPart = '';
+    let tensUnitPart = '';
+
+    const hundreds = Math.floor(num / 100);
+    if (hundreds > 0) {
+        hundredsPart = hundredsWord[hundreds];
+    }
+
+    const remainder = num % 100;
+    if (remainder >= 20) {
+        tensUnitPart = tensWords[Math.floor(remainder / 10)];
+        if (remainder % 10 > 0) {
+            tensUnitPart += '-' + wordNumbers[remainder % 10];
+        }
+    } else if (remainder > 0) {
+        tensUnitPart = wordNumbers[remainder];
+    } else if (hundreds === 0) {
+        tensUnitPart = 'zero';  // shouldn't hit but safe
+    }
+
+    // Append hundreds line if exists (red)
+    if (hundredsPart) {
+        const span = createWordSpan(hundredsPart, isUnitOnly);
+        container.appendChild(span);
+        }
+    // Append tens+unit hyphenated single line (tens red, unit black)
+    if (tensUnitPart) {
+        const words = tensUnitPart.split(' ');
+        words.forEach((word, i) => {
+            const isUnitWord = i === words.length - 1;
+            const span = createWordSpan(word, isUnitOnly || isUnitWord);
+            container.appendChild(span);
+            if (i < words.length - 1) {
+                container.appendChild(createWordSpan(' ', isUnitOnly || isUnitWord));
+            }
+        });
+    }
+}
+
+        let mode = 'addition';
+
+        function generateTiles() {
+            const selected = [];
+            const used = new Set();
+            while (selected.length < 49) {
+                const a = Math.floor(Math.random() * 10);
+                const b = Math.floor(Math.random() * 10);
+                const result = mode === 'addition' ? a + b : (a >= b ? a - b : 10 + a - b);
+                const idx = a * 10 + b;
+                if (!used.has(idx)) {
+                    used.add(idx);
+                    selected.push({ type: 'operation', realA: a, realB: b, result });
+                }
+            }
+
+            const resultCounts = {};
+            selected.forEach(t => resultCounts[t.result] = (resultCounts[t.result] || 0) + 1);
+
+            const tiles = [...selected];
+            Object.keys(resultCounts).forEach(r => {
+                if (resultCounts[r] % 2 === 1) {
+                    tiles.push({ type: 'result', value: +r, result: +r });
+                }
+            });
+
+            return tiles;
+        }
+
+        let tiles = generateTiles();
+        let tileElements = [];
+
+        function mildShuffle() {
+            // same as before
+            tiles.sort((a, b) => a.result - b.result);
+            for (let i = 0; i < tiles.length; i += 10) {
+                const chunk = tiles.slice(i, i + 10);
+                for (let j = chunk.length - 1; j > 0; j--) {
+                    const k = Math.floor(Math.random() * (j + 1));
+                    [chunk[j], chunk[k]] = [chunk[k], chunk[j]];
+                }
+                tiles.splice(i, 10, ...chunk);
+            }
+            for (let i = tiles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+            }
+        }
+
+        function renderBoard() {
+            const gameArea = document.getElementById('game-area');
+            gameArea.innerHTML = '';
+            tileElements = [];
+
+            tiles.forEach((tile, index) => {
+                const div = document.createElement('div');
+                div.classList.add('tile');
+
+                const content = document.createElement('div');
+                content.classList.add('tile-content');
+
+                if (tile.type === 'operation') {
+                    const bigA = randomBigNumber(tile.realA);
+                    const bigB = randomBigNumber(tile.realB);
+
+                    renderNumberWord(bigA, content);
+                    const op = document.createElement('div');
+                    op.classList.add('operator');
+                    op.textContent = mode === 'addition' ? '+' : '−';
+                    content.appendChild(op);
+                    renderNumberWord(bigB, content);
+                } else {
+                    renderNumberWord(tile.value, content, true); // result small clean
+                }
+
+                div.appendChild(content);
+                div.dataset.index = index;
+                div.addEventListener('click', handleClick);
+                gameArea.appendChild(div);
+                tileElements.push(div);
+            });
+        }
+
+        // celebrateMatch, handleClick, toggle, reset same as last version (unit digit flash + GOAT on win)
+
+        function celebrateMatch(display) {
+    const overlay = document.getElementById('celebration-overlay');
+    const number = document.getElementById('celebration-number');
+    number.textContent = typeof display === 'string' ? display : display;
+    overlay.style.opacity = 1;
+    void overlay.offsetWidth;
+    number.style.transition = 'opacity 0.2s ease';
+    number.style.opacity = 1;
+    setTimeout(() => {
+        overlay.style.transition = 'opacity 0.6s ease';
+        number.style.transition = 'opacity 0.4s ease';
+        overlay.style.opacity = 0;
+        number.style.opacity = 0;
+    }, 500);
+}
+
+let firstSelected = null;
+let matchedCount = 0;
+let totalPairs = tiles.length / 2;
+
+function handleClick(e) {
+    const tileDiv = e.currentTarget;
+    if (tileDiv.classList.contains('matched')) return;
+
+    const index = parseInt(tileDiv.dataset.index);
+    if (firstSelected === index) return; // no self-match
+
+    const tile = tiles[index];
+
+    if (firstSelected === null) {
+        firstSelected = index;
+        tileDiv.classList.add('selected');
+        document.getElementById('message').textContent = 'Now tap another with same result!';
+    } else {
+        const firstTile = tiles[firstSelected];
+        const firstDiv = tileElements[firstSelected];
+
+        if (firstTile.result === tile.result) {
+            tileDiv.classList.add('matched');
+            firstDiv.classList.add('matched');
+            firstDiv.classList.remove('selected');
+            matchedCount++;
+            document.getElementById('message').textContent = 'MATCH LOCKED! FIRE!';
+            celebrateMatch(firstTile.result);
+
+            if (matchedCount === totalPairs) {
+                celebrateMatch('GOAT');
+                setTimeout(() => {
+                    document.getElementById('message').textContent = 'BOARD CLEARED! YOU ARE THE GOAT!';
+                }, 600);
+            }
+        } else {
+            document.getElementById('message').textContent = 'NOPE, WRONG RESULT BRUH';
+            tileDiv.classList.add('selected');
+            setTimeout(() => {
+                tileDiv.classList.remove('selected');
+                firstDiv.classList.remove('selected');
+                document.getElementById('message').textContent = '';
+            }, 1200);
+        }
+        firstSelected = null;
+    }
+}
+        // handleClick same, with celebrateMatch(tile.result) and on win celebrateMatch('GOAT')
+
+        mildShuffle();
+        renderBoard();
+    </script>
+</body>
+</html>

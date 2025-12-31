@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Addition / Subtraction Tiles Matching Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            text-align: center;
+            margin: 0;
+            padding: 20px 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 { color: #333; font-size: 24px; margin: 10px 0; }
+        #instructions { max-width: 90%; margin: 15px auto; font-size: 16px; color: #555; }
+        #controls { margin: 15px; }
+        #mode-toggle, #reset-btn {
+            padding: 10px 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+        #mode-toggle { background-color: #9494ff; color: white; }
+        #mode-toggle:hover { background-color: #adadff; }
+        #reset-btn { background-color: #9494ff; color: white; }
+        #reset-btn:hover { background-color: #adadff; }
+        #message { font-size: 22px; margin: 15px; min-height: 40px; color: #d00; font-weight: bold; }
+
+        /* Board wrapper for scale + perfect centering */
+        #board-wrapper {
+            width: fit-content;
+            margin: 20px auto;
+            transform-origin: top center;
+        }
+
+        #game-area {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(50px,1fr));
+            gap: 10px;
+            padding: 15px;
+            background-color: #e0e0ff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            justify-content: center; /* centers tiles in last row */
+        }
+
+        .tile {
+            width: 100%;
+            padding-bottom: 100%;
+            border: 1px solid #416755;
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            user-select: none;
+            overflow: hidden;
+        }
+
+        .tile-content {
+            position: absolute;
+            top: 0; left: 0;
+            width: 113%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            padding: 5px;
+            box-sizing: border-box;
+            transform: scale(0.55);
+            transform-origin: center;
+        }
+
+        .top, .bottom { font-size: 30px; }
+        .operator { font-size: 21px; margin: 1px 0; }
+        .tile-content:not(:has(.top)) { font-size: 36px; }
+        .white { background-color: #5f967c; } /* cream */
+        .black { background-color: #e0ffe0; } /* pale-green */
+
+        .selected { 
+            border: 2px solid #d2f8d2;
+            background-color: #90ee90;
+            transform: scale(1.02);
+            transform-origin: left center;
+         }
+        .matched { opacity: 0.4; cursor: default; border-color: #0a0; }
+
+        #celebration-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(0,0,0,0.6);
+            display: flex; align-items: center; justify-content: center;
+            pointer-events: none; opacity: 0; transition: opacity 0.3s ease; z-index: 1000;
+        }
+        #celebration-number { font-size: 240px; font-weight: bold; color: white; opacity: 0; }
+
+        @media (max-width: 500px) {
+            .top, .bottom { font-size: 32px; }
+            .operator { font-size: 17px; }
+            .tile-content:not(:has(.top)) { font-size: 34px; }
+            #celebration-number { font-size: 150px; }
+    </style>
+</head>
+<body>
+    <h1>Addition / Subtraction Tiles Matching Game</h1>
+    <div id="instructions">
+        Tap two tiles with the same result to match & lock.<br>
+        Subtraction borrows when needed (4−8 = 6).<br>
+        ~50 tiles per game, fresh mix every time. Clear the board, legend!
+    </div>
+    
+    <div id="controls">
+        <button id="mode-toggle">Switch to
+        Subtraction</button>
+        <div id="message"></div>
+        <button id="reset-btn">↩️</button>
+    </div>
+
+    <div id="board-wrapper">
+        <div id="game-area"></div>
+    </div>
+
+    <div id="celebration-overlay">
+        <div id="celebration-number"></div>
+    </div>
+
+    <script>
+        let mode = 'addition';
+
+        function generateTiles() {
+            const allPossible = [];
+            for (let a = 0; a <= 9; a++) {
+                for (let b = 0; b <= 9; b++) {
+                    const result = mode === 'addition' ? a + b : (a >= b ? a - b : 10 + a - b);
+                    allPossible.push({ type: 'operation', values: [a, b], operator: mode === 'addition' ? '+' : '−', result });
+                }
+            }
+
+            const selected = [];
+            const usedCombos = new Set();          
+            for (let digit = 0; digit <= 9; digit++) {
+                let possiblesTop = allPossible.filter((t, idx) => t.values[0] === digit && !usedCombos.has(idx));
+
+                if (possiblesTop.length > 0) {
+                    let chosen = possiblesTop[Math.floor(Math.random() * possiblesTop.length)];
+                    let idx = allPossible.indexOf(chosen);
+                    selected.push(chosen);
+                    usedCombos.add(idx);  }
+
+
+                let possiblesBottom = allPossible.filter((t, idx) => t.values[1] === digit && !usedCombos.has(idx));
+                if (possiblesBottom.length > 0)     {
+                    let chosen = possiblesBottom[Math.floor(Math.random() * possiblesBottom.length)];
+                    let idx = allPossible.indexOf(chosen);
+                    selected.push(chosen);
+                    usedCombos.add(idx);
+
+                }}
+
+            let remaining = allPossible.filter((t, idx) => !                usedCombos.has(idx));
+            
+            while (selected.length < 56 && remaining.length > 0) {
+    let idx = Math.floor(Math.random() * remaining.length);
+    selected.push(remaining[idx]);
+    remaining.splice(idx, 1);
+}
+
+/*
+            const used = new Set();
+            while (selected.length < 49 && used.size < allPossible.length) {
+                const idx =             Math.floor(Math.random() * allPossible.length);
+                if (!used.has(idx)) {
+                    used.add(idx);
+                selected.push(allPossible[idx]);
+               }
+            }
+
+*/
+
+            // Count results & add extra result tile for odd counts
+            const resultCounts = {};
+            selected.forEach(t => resultCounts[t.result] = (resultCounts[t.result] || 0) + 1);
+
+            const tiles = [...selected];
+            Object.keys(resultCounts).forEach(r => {
+                if (resultCounts[r] % 2 === 1) {
+                    tiles.push({ type: 'result', value: +r, result: +r });
+                }
+            });
+
+            return tiles;
+        }
+
+        let tiles = generateTiles();
+        let tileElements = [];
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function mildShuffle() {
+            tiles.sort((a, b) => a.result - b.result);
+            for (let i = 0; i < tiles.length; i += 10) {
+                const chunk = tiles.slice(i, i + 10);
+                shuffle(chunk);
+                tiles.splice(i, 10, ...chunk);
+            }
+            shuffle(tiles);
+        }
+
+        function renderBoard() {
+            const gameArea = document.getElementById('game-area');
+            gameArea.innerHTML = '';
+            tileElements = [];
+
+            tiles.forEach((tile, index) => {
+                const div = document.createElement('div');
+                div.classList.add('tile');
+                const row = Math.floor(index / 6);
+                const col = index % 6;
+                if ((row + col) % 2 === 0) {
+                    div.classList.add('black');
+                } else {
+                    div.classList.add('white');
+                }
+
+                const content = document.createElement('div');
+                content.classList.add('tile-content');
+
+                if (tile.type === 'operation') {
+                    const top = document.createElement('div');
+                    top.classList.add('top');
+                    top.textContent = tile.values[0];
+                    const op = document.createElement('div');
+                    op.classList.add('operator');
+                    op.textContent = tile.operator;
+                    const bottom = document.createElement('div');
+                    bottom.classList.add('bottom');
+                    bottom.textContent = tile.values[1];
+                    content.appendChild(top);
+                    content.appendChild(op);
+                    content.appendChild(bottom);
+                } else {
+                    content.textContent = tile.value;
+                }
+
+                div.appendChild(content);
+                div.dataset.index = index;
+                div.addEventListener('click', handleClick);
+                gameArea.appendChild(div);
+                tileElements.push(div);
+            });
+        }
+
+        function celebrateMatch(display) {
+            const overlay = document.getElementById('celebration-overlay');
+            const number = document.getElementById('celebration-number');
+            number.textContent = display;
+            overlay.style.opacity = 1;
+            void overlay.offsetWidth;
+            number.style.transition = 'opacity 0.2s ease';
+            number.style.opacity = 1;
+
+            setTimeout(() => {
+                overlay.style.transition = 'opacity 0.6s ease';
+                number.style.transition = 'opacity 0.4s ease';
+                overlay.style.opacity = 0;
+                number.style.opacity = 0;
+            }, 500);
+        }
+
+        let firstSelected = null;
+        let matchedCount = 0;
+        let totalPairs = tiles.length / 2;
+
+        function handleClick(e) {
+            const tileDiv = e.currentTarget;
+            if (tileDiv.classList.contains('matched')) return;
+
+            const index = parseInt(tileDiv.dataset.index);
+            if (firstSelected === index) return; // no self-match
+
+            const tile = tiles[index];
+
+            if (firstSelected === null) {
+                firstSelected = index;
+                tileDiv.classList.add('selected');
+                document.getElementById('message').textContent = 'Now tap another with same result!';
+            } else {
+                const firstTile = tiles[firstSelected];
+                const firstDiv = tileElements[firstSelected];
+
+                if (firstTile.result === tile.result) {
+                    tileDiv.classList.add('matched');
+                    firstDiv.classList.add('matched');
+                    firstDiv.classList.remove('selected');
+                    matchedCount++;
+                    document.getElementById('message').textContent = 'MATCH LOCKED! FIRE!';
+                    celebrateMatch(firstTile.result);
+
+                    if (matchedCount === totalPairs) {
+                        celebrateMatch('GOAT');
+                        setTimeout(() => {
+                            document.getElementById('message').textContent = 'BOARD CLEARED! YOU ARE THE GOAT!';
+                        }, 600);
+                    }
+                } else {
+                    document.getElementById('message').textContent = 'NOPE, WRONG RESULT BRUH';
+                    tileDiv.classList.add('selected');
+                    setTimeout(() => {
+                        tileDiv.classList.remove('selected');
+                        firstDiv.classList.remove('selected');
+                        document.getElementById('message').textContent = '';
+                    }, 1200);
+                }
+                firstSelected = null;
+            }
+        }
+
+        document.getElementById('mode-toggle').addEventListener('click', () => {
+            mode = mode === 'addition' ? 'subtraction' : 'addition';
+            document.getElementById('mode-toggle').textContent = mode === 'addition' ? 'Switch to Subtraction' : 'Switch to Addition';
+            tiles = generateTiles();
+            totalPairs = tiles.length / 2;
+            mildShuffle();
+            firstSelected = null;
+            matchedCount = 0;
+            document.getElementById('message').textContent = '';
+            renderBoard();
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            mildShuffle();
+            firstSelected = null;
+            matchedCount = 0;
+            document.getElementById('message').textContent = '';
+            renderBoard();
+        });
+
+        mildShuffle();
+        renderBoard();
+    </script>
+</body>
+</html>
