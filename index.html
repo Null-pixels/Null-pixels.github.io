@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NP library</title>
+    <meta property="og:title" content="NP Store">  
+    <meta property="og:description" content="Exciting deals click now!!!">
+    <meta property="og:image" content="https://avatars.githubusercontent.com/u/109794342?v=4&size=64">  
+    <meta property="og:url" content="index.html"> 
+    <meta property="og:type" content="website"> 
+    <link rel="icon" href="https://avatars.githubusercontent.com/u/109794342?v=4&size=64" type="image/x-icon">
+    <title>NP Library</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -175,61 +181,19 @@
     <div id="board-wrapper">
         <div id="game-area">
             <!-- thike are as follows -->
-            <div class="window tile" data-category="games">
-                <div class="body">
-                    <div class="topbar" data-title="math">#game-00</div>
-                    <a href="unitAdd.html" target="_blank" class="tile-content" data-url="unitAdd.html">
-                        <img class="app-icon" src="https://mathforlove.com/wp-content/uploads/2019/09/prime-climb-big.jpg" alt="Icon">
-                        <div class="word" data-word="math"></div>
-                        <div class="description" data-desc="Manual fallback description if CORS blocks or no meta.">Brain-melting action, nonstop adrenaline, pure fire gameplay for real ones.</div>
-                        <div class="rating">★★★★☆</div>
-                    </a>
-                </div>
-            </div>
-            <div class="window tile" data-category="productivity">
-                <div class="body">
-                    <div class="topbar" data-title="math">#game-00</div>
-                    <a href="majorSys.html" target="_blank" class="tile-content" data-url="majorSys.html">
-                        <img class="app-icon" src="https://c8.alamy.com/comp/2DADNM5/maths-game-with-pictures-geometric-shapes-for-children-middle-level-education-game-for-kids-preschool-worksheet-activity-task-for-the-development-2DADNM5.jpg" alt="Icon">
-                        <div class="word" data-word="math">#game-00</div>
-                        <div class="description" data-desc="Manual fallback description if CORS blocks or no meta.">Organize your life constitutionally while slaying tasks like a boss.</div>
-                        <div class="rating">★★★★★</div>
-                    </a>
-                </div>
-            </div>
+                
             <div class="window tile" data-category="entertainment">
                 <div class="body">
-                    <div class="topbar" data-title="math">#game-00</div>
-                    <a href="FingerAddSub.htm" target="_blank" class="tile-content" data-url="FingerAddSub.htm">
-                        <img class="app-icon" src="https://m.media-amazon.com/images/I/81BtGkgPz7L._UF350,350_QL80_.jpg" alt="Icon">
-                        <div class="word" data-word="math">#game-00</div>
-            <div class="description" data-desc="Manual fallback description if CORS blocks or no meta.">Create peak brain rot memes that go viral instantly, no cap.</div>
-                        <div class="rating">★★★☆☆</div>
+                    <div class="topbar" id="meta-title"></div>
+                    <a href="#" target="_blank" class="tile-content">
+                        <img class="app-icon" id="meta-icon" src="" alt="Icon">
+                        <div class="word" id=""><span id="meta-title">💯</span></div>
+<div class="description"><span id="meta-desc"></span></div>
+                        <div class="rating">🚨🚨🚨🚨🚨</div>
                     </a>
                 </div>
             </div>
-            <div class="window tile" data-category="entertainment">
-                <div class="body">
-                    <div class="topbar" data-title="math">#game-00</div>
-                    <a href="addsub.html" target="_blank" class="tile-content" data-url="addsub.html">
-                        <img class="app-icon" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrqxX-J2dNtbBe1wSwRXBjBbEdu7-MUoXYdg&s" alt="Icon">
-                        <div class="word" data-word="math">#game-00</div>
-<div class="description" data-desc="Manual fallback description if CORS blocks or no meta.">Create peak brain rot memes that go viral instantly, no cap.</div>
-                        <div class="rating">★★★☆☆</div>
-                    </a>
-                </div>
-            </div>
-            <div class="window tile" data-category="games">
-    <div class="body">
-        <div class="topbar" data-title="Epic Shooter">Epic Shooter</div>
-        <a href="unitAdd.html" target="_blank" class="tile-content" data-url="https://raw.githubusercontent.com/Null-pixels/Null-pixels.github.io/main/unitAdd.html">
-            <img class="app-icon" src="https://picsum.photos/200/200?random=1" alt="Icon">
-            <div class="word" data-word="Epic Shooter">Epic Shooter</div>
-            <div class="description" data-desc="Manual desc if fetch fails.">Manual desc if fetch fails.</div>
-            <div class="rating">★★★★☆</div>
-        </a>
-    </div>
-</div>
+           
             <!-- new tiles here -->
         </div>
     </div>
@@ -263,14 +227,51 @@
             });
         });
 
-        // Random sizes on load
-        const tiles = document.querySelectorAll('.window.tile');
+document.addEventListener('DOMContentLoaded', () => {        
+        const title= document.getElementById('meta-title');
+        const icon= document.getElementById('meta-icon');
+        const desc= document.getElementById('meta-desc');
+        
+    title.textContent = document.querySelector('meta[property="og:title"]')?.content;
+    desc.textContent = document.querySelector('meta[property="og:description"]')?.content;
+    icon.src = document.querySelector('meta[property="og:image"]')?.content ||     document.querySelector('link[rel="apple-touch-icon"]')?.href;
+        });
+        
+        
+        
+        
+        fetch('apps.json')
+    .then(res => res.json())
+    .then(apps => {
+        const area = document.getElementById('game-area');
+        apps.forEach(app => {
+            const tile = document.createElement('div');
+            tile.className = 'window tile';
+            tile.dataset.category = app.category;
+            tile.innerHTML = `
+                <div class="body">
+                    <div class="topbar">${app.title}</div>
+                    <a href="${app.href}" target="_blank" class="tile-content">
+                        <img class="app-icon" src="${app.icon}" alt="Icon">
+                        <div class="word">${app.title}</div>
+                        <div class="description">${app.desc}</div>
+                        <div class="rating">${app.rating}</div>
+                    </a>
+                </div>
+            `;
+           
+           const tiles = document.querySelectorAll('.window.tile');
         const widths = ['180px', '300px', '350px', '400px', '280px']; // variety
         const heights = ['270px', '320px', '380px', '250px', '350px'];
         tiles.forEach(tile => {
             tile.style.width = widths[0];
             tile.style.height = heights[0];
         });
+            area.appendChild(tile);
+        });
+    });
+
+        
     </script>
 </body>
 </html>
