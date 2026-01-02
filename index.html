@@ -133,7 +133,7 @@
         }
         .side-menu.open { transform: translateX(0); }
         .side-menu ul { list-style: none; padding: 0; }
-        .side-menu a {
+            .expand, .side-menu a{
             color: #ffd700;
             text-decoration: none;
             font-size: 18px;
@@ -142,7 +142,7 @@
             border-radius: 5px;
             transition: background 0.3s;
         }
-        .side-menu a:hover { background: rgba(255,165,0,0.4); }
+         .side-menu a:hover { background: rgba(255,165,0,0.4); }
         #menu-toggle {
             position: fixed;
             left: 10px;
@@ -154,6 +154,7 @@
             font-size: 28px;
             cursor: pointer;
         }
+
         @media (max-width: 600px) {
             .word { font-size: 16px; }
             .description { font-size: 12px; }
@@ -163,6 +164,20 @@
             display: grid;
             grid-template-columns: repeat(2, minmax(70px,1fr));
             padding: 10px; gap: 15px; }
+            .expand ul { display: none; 
+            padding: 10px;
+            }
+            .expand a{
+                color: #ffd;
+            text-decoration: none;
+            font-size: 14px;
+            display: block;
+            padding: 10px;
+            }
+            .expand:hover ul{
+                display: block;    
+                background: rgba(22,20,20,0.5);           
+            }
         }
     </style>
 </head>
@@ -174,6 +189,15 @@
             <li><a href="#" data-category="games">Games</a></li>
             <li><a href="#" data-category="productivity">Productivity</a></li>
             <li><a href="#" data-category="entertainment">Entertainment</a></li>
+             
+            <nav class="expand">
+            <li  data-category="all">
+                Sause
+                <nav id="sause">
+                    </nav>
+                </li>
+                </nav>
+     
         </ul>
     </nav>
     <h1>Fun Store</h1>
@@ -237,14 +261,15 @@ document.addEventListener('DOMContentLoaded', () => {
     icon.src = document.querySelector('meta[property="og:image"]')?.content ||     document.querySelector('link[rel="apple-touch-icon"]')?.href;
         });
         
-        
-        
-        
         fetch('apps.json')
     .then(res => res.json())
     .then(apps => {
+        const sauce = document.createElement('ul');        document.getElementById('sause').appendChild(sauce);
         const area = document.getElementById('game-area');
         apps.forEach(app => {
+        let cat = app.category;
+       console.log(app.category.length);
+        if (cat.toString() != "web"){
             const tile = document.createElement('div');
             tile.className = 'window tile';
             tile.dataset.category = app.category;
@@ -268,7 +293,17 @@ document.addEventListener('DOMContentLoaded', () => {
             tile.style.height = heights[0];
         });
             area.appendChild(tile);
-        });
+        } else {
+            const item = document.createElement('li');
+            item.dataset.category = app.category;
+            item.innerHTML = `
+                    <a href="${app.href}" target="_blank" >
+                       ${app.title}
+                    </a>
+            `;
+            sauce.appendChild(item);  
+        }      
+        });       
     });
 
         
