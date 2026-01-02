@@ -42,11 +42,10 @@
         }
         #game-area {
             display: grid;
-            flex-wrap: wrap;
+            grid-template-columns: repeat(2, minmax(100px, 1fr));
             gap: 20px;
             padding: 20px;
             justify-content: center;
-            align-content: flex-start;
             background: linear-gradient(145deg, rgba(20,1,11,0.4), rgba(20,30,11,0.6));
             border-radius: 5px;
             box-shadow: 0 8px 32px rgba(20,1,11,0.8), inset 0 0 30px rgba(255,140,0,0.2);
@@ -54,14 +53,15 @@
             min-height: 80vh;
         }
         .window.tile {
-            border-radius: 10px;
+            border-radius: 8px;
             overflow: hidden;
             transition: all 0.4s ease;
             background: linear-gradient(135deg, rgba(20,1,11,0.7), rgba(100,75,50,0.7));
             box-shadow: 0 2px 2px rgba(0,0,0,0.5), 0 0 10px rgba(255,140,0,0.3);
-            flex: 0px 0 auto; /* no grow/shrink */
             display: flex;
             flex-direction: column;
+            width: 100%;
+            box-sizing: border-box;
         }
         .window.tile:hover {
             transform: translateY(-5px);
@@ -74,11 +74,11 @@
         }
         .topbar {
             height: 40px;
-            background: linear-gradient(45deg, rgba(105,10,11,0.8), #D10202);
+            background: linear-gradient(45deg, rgba(10,10,11,0.8), #000);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #ffd700;
+            color: #f0f00;
             font-weight: bold;
             text-shadow: 0 0 4px #ff8c00;
         }
@@ -125,24 +125,24 @@
             height: 100vh;
             width: 200px;
             background: linear-gradient(135deg, rgba(20,1,11,0.8), rgba(100,75,50,0.8));
-            box-shadow: -20px 0 -40px rgba(255,140,0,0.5);
+            box-shadow: -20px 0 40px rgba(255,140,0,0.5);
             padding: 20px;
             transform: translateX(-100%);
             transition: transform 0.3s ease;
             z-index: 100;
         }
         .side-menu.open { transform: translateX(0); }
-        .side-menu ul { list-style: none; padding: 0; }
-            .expand, .side-menu a{
+        .side-menu ul { list-style: none; padding: 0; margin: 0; }
+        .expand, .side-menu a {
             color: #ffd700;
             text-decoration: none;
-            font-size: 18px;
+            font-size: 23px;
             display: block;
             padding: 10px;
             border-radius: 5px;
             transition: background 0.3s;
         }
-         .side-menu a:hover { background: rgba(255,165,0,0.4); }
+        .side-menu a:hover { background: rgba(255,165,0,0.4); }
         #menu-toggle {
             position: fixed;
             left: 10px;
@@ -154,19 +154,48 @@
             font-size: 28px;
             cursor: pointer;
         }
+        #pull-refresh {
+            position: fixed;
+            top: -50px;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: top 0.3s ease;
+            z-index: 999;
+        }
+        .arrow {
+            font-size: 34px;
+            transition: transform 0.3s;
+            color: #ffd700;
+        }
+        .loading {
+            font-size: 18px;
+            color: #ffd700;
+        }
 
+        /* Mobile fixes */
         @media (max-width: 600px) {
+            #game-area {
+            grid-template-columns: repeat(2, minmax(60,1fr));               
+              //flex-direction: row;
+                gap: 12px;
+                padding: 10px;
+            }
+            .app-icon { width: 90px; height: 90px; }
             .word { font-size: 16px; }
             .description { font-size: 12px; }
-            .app-icon { width: 90px; height: 90px; }
             .side-menu { width: 150px; }
-            #game-area { 
-            display: grid;
-            grid-template-columns: repeat(2, minmax(70px,1fr));
-            padding: 10px; gap: 15px; }
-            .expand ul { display: none; 
-            padding: 10px;
+            .side-menu a { font-size: 14px; padding: 8px; }
+            .expand ul { 
+                display: none; 
+                padding: 10px;
+                background: rgba(22,20,20,0.5);
             }
+            .expand:hover ul { display: block; }
             .expand a{
                 color: #ffd;
             text-decoration: none;
@@ -174,55 +203,78 @@
             display: block;
             padding: 10px;
             }
-            .expand:hover ul{
-                display: block;    
-                background: rgba(22,20,20,0.5);           
-            }
         }
     </style>
 </head>
 <body>
+    <div id="pull-refresh">
+        <span class="arrow">⤾</span>
+        <span class="loading" style="display:none;"></span>
+    </div>
+
     <button id="menu-toggle">☰</button>
+
     <nav class="side-menu">
         <ul>
             <li><a href="#" data-category="all">All Apps</a></li>
             <li><a href="#" data-category="games">Games</a></li>
             <li><a href="#" data-category="productivity">Productivity</a></li>
             <li><a href="#" data-category="entertainment">Entertainment</a></li>
-             
-            <nav class="expand">
-            <li  data-category="all">
-                Sause
-                <nav id="sause">
-                    </nav>
-                </li>
-                </nav>
-     
+            <li class="expand" data-category="all">
+                Sauce
+                <ul id="sauce"></ul>
+            </li>
         </ul>
     </nav>
+
     <h1>Fun Store</h1>
     <input type="text" id="search-input" placeholder="Search apps...">
+
     <div id="board-wrapper">
-        <div id="game-area">
-            <!-- thike are as follows -->
-                
-            <div class="window tile" data-category="entertainment">
-                <div class="body">
-                    <div class="topbar" id="meta-title"></div>
-                    <a href="#" target="_blank" class="tile-content">
-                        <img class="app-icon" id="meta-icon" src="" alt="Icon">
-                        <div class="word" id=""><span id="meta-title">💯</span></div>
-<div class="description"><span id="meta-desc"></span></div>
-                        <div class="rating">🚨🚨🚨🚨🚨</div>
-                    </a>
-                </div>
-            </div>
-           
-            <!-- new tiles here -->
-        </div>
+        <div id="game-area"></div>
     </div>
 
     <script>
+        // Pull to refresh
+        let touchStartY = 0;
+        let pulled = false;
+        const threshold = 120;
+
+        const refreshBox = document.getElementById('pull-refresh');
+        const arrow = document.querySelector('.arrow');
+        const loading = document.querySelector('.loading');
+
+        document.body.addEventListener('touchstart', e => {
+            if (window.scrollY !== 0) return;
+            touchStartY = e.touches[0].clientY;
+        });
+
+        document.body.addEventListener('touchmove', e => {
+            if (window.scrollY !== 0) return;
+            const pullDistance = e.touches[0].clientY - touchStartY;
+            if (pullDistance > 0) {
+
+                refreshBox.style.top = '0px';
+                if (pullDistance > threshold) {
+                    pulled = true;
+                    arrow.textContent = '↻';
+                } else {
+                    pulled = false;
+                    arrow.textContent = '⤾';
+                }
+            }
+        });
+
+        document.body.addEventListener('touchend', () => {
+            if (pulled) {
+                arrow.style.display = 'none';
+                loading.style.display = 'inline';
+                setTimeout(() => location.reload(), 800);
+            } else {
+                refreshBox.style.top = '-50px';
+            }
+        });
+
         // Menu toggle
         document.getElementById('menu-toggle').addEventListener('click', () => {
             document.querySelector('.side-menu').classList.toggle('open');
@@ -251,69 +303,94 @@
             });
         });
 
-document.addEventListener('DOMContentLoaded', () => {        
-        const title= document.getElementById('meta-title');
-        const icon= document.getElementById('meta-icon');
-        const desc= document.getElementById('meta-desc');
-        
-    title.textContent = document.querySelector('meta[property="og:title"]')?.content;
-    desc.textContent = document.querySelector('meta[property="og:description"]')?.content;
-    icon.src = document.querySelector('meta[property="og:image"]')?.content ||     document.querySelector('link[rel="apple-touch-icon"]')?.href;
-        });
-        
-        fetch('apps.json')
-    .then(res => res.json())
-    .then(apps => {
-        const sauce = document.createElement('ul');        document.getElementById('sause').appendChild(sauce);
-        const area = document.getElementById('game-area');
-        apps.forEach(app => {
-        let cat = app.category;
-      //  if (cat.toString() != "web"){
-            const tile = document.createElement('div');
-            tile.className = 'window tile';
-            tile.dataset.category = app.category;
-            let title = app.title, desc = app.desc, icon = app.icon, href = app.href, rating = app.rating;
-            if (cat === "web") {
-                desc = "absolute Jobber!!!";
-                icon = "https://picsum.photos/200/300";
-                rating = "★★☆☆☆";
-            } 
-            tile.innerHTML = `
-                <div class="body">
-                    <div class="topbar">${title}</div>
-                    <a href="${href}" target="_blank" class="tile-content">
-                        <img class="app-icon" src="${icon}" alt="Icon">
-                        <div class="word">${title}</div>
-                        <div class="description">${desc}</div>
-                        <div class="rating">${rating}</div>
-                    </a>
-                </div>
-            `;
-           
-           const tiles = document.querySelectorAll('.window.tile');
-        const widths = ['180px', '300px', '350px', '400px', '280px']; // variety
-        const heights = ['270px', '320px', '380px', '250px', '350px'];
-        tiles.forEach(tile => {
-            tile.style.width = widths[0];
-            tile.style.height = heights[0];
-        });
-            area.appendChild(tile);
-       // } 
-        if (cat === "web") {
-            
-            const item = document.createElement('li');
-            item.dataset.category = app.category;
-            item.innerHTML = `
-                    <a href="${app.href}" target="_blank" >
-                       ${app.title}
-                    </a>
-            `;
-            sauce.appendChild(item);  
-        }     
-        });       
-    });
+        // Main app loader
+        async function AppDraw() {
+            try {
+                const res = await fetch('apps.json');
+                const apps = await res.json();
 
-        
+                const sauce = document.createElement('ul');
+                document.getElementById('sauce').appendChild(sauce);
+
+                const area = document.getElementById('game-area');
+                const tiles = [];
+
+                apps.forEach(app => {
+                    const tile = document.createElement('div');
+                    tile.className = 'window tile';
+                    tile.dataset.category = app.category;
+
+                    let { title, desc, icon, href, rating } = app;
+                    let word = app.word || title;
+
+                    if (app.category === "web") {
+                        const item = document.createElement('li');
+                        item.innerHTML = `<a href="${href}" target="_blank"> ${title}</a>`;
+                        sauce.appendChild(item);
+                        desc = "absolute Jobber!!!";
+                        rating = "★★☆☆☆";
+                    } else if (app.category === "meta") {
+                        tile.id = 'meta_tile';
+                    }
+
+                    tile.innerHTML = `
+                        <div class="body">
+                            <div class="topbar">${title}</div>
+                            <a href="${href}" target="_blank" class="tile-content">
+                                <img class="app-icon" src="${icon}" alt="Loading…" onerror="this.src='https://picsum.photos/200/367'">
+                                <div class="word">${word}</div>
+                                <div class="description">${desc}</div>
+                                <div class="rating">${rating}</div>
+                            </a>
+                        </div>
+                    `;
+
+                    tiles.push(tile);
+                    area.appendChild(tile);
+                });
+
+                   if (window.innerWidth > 600) {
+                    const percentPairs = [[50,50],[40,60],[60,40],[45,55],[55,45],[38,62],[62,38]];
+                    const rowPairs = [];
+                    for (let row = 0; row < Math.ceil(tiles.length / 2); row++) {
+                        rowPairs.push(percentPairs[Math.floor(Math.random() * percentPairs.length)]);
+                    }
+                    tiles.forEach((tile, i) => {
+                        const rowIndex = Math.floor(i / 2);
+                        const pair = rowPairs[rowIndex];
+                        const percent = (i % 2 === 0) ? pair[0] : pair[1];
+                        tile.style.width = `calc(${percent}% - 10px)`;  // adjust for desktop gap
+                        title.style.height ='270px';
+                    });
+                    
+               }
+                
+
+                // Meta tile OG update
+                const meta_tile = document.getElementById('meta_tile');
+                if (meta_tile) {
+                    meta_tile.querySelector('.topbar').textContent = 
+                        document.querySelector('meta[property="og:title"]')?.content ?? 'NP Store';
+
+                    meta_tile.querySelector('.description').textContent = 
+                        document.querySelector('meta[property="og:description"]')?.content ?? 'Exciting deals click now!!!';
+
+                    const iconImg = meta_tile.querySelector('.app-icon');
+                    if (iconImg) {
+                        const ogIcon = document.querySelector('meta[property="og:image"]')?.content ||
+                                       document.querySelector('link[rel="icon"]')?.href;
+                        if (ogIcon) iconImg.src = ogIcon;
+                        meta_tile.querySelector('.tile-content').href = "index.html";
+                        
+                    }
+                }
+
+            } catch (err) {
+                console.error('Apps load failed:', err);
+            }
+        }
+
+        AppDraw();
     </script>
 </body>
 </html>
