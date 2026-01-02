@@ -292,8 +292,8 @@ document.addEventListener('DOMContentLoaded', () => {
             tile.style.height = heights[0];
         });
             area.appendChild(tile);
-       /* } 
-        else {
+       // } 
+        if (cat === "web") {
             const item = document.createElement('li');
             item.dataset.category = app.category;
             item.innerHTML = `
@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </a>
             `;
             sauce.appendChild(item);  
-        }      */
+        }     
         });       
     });
 
