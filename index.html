@@ -272,14 +272,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const tile = document.createElement('div');
             tile.className = 'window tile';
             tile.dataset.category = app.category;
+            let title = app.title, desc = app.desc, icon = app.icon, href = app.href, rating = app.rating;
+            if (cat === "web") {
+                desc = "absolute Jobber!!!";
+                icon = "https://picsum.photos/200/300";
+                rating = "★★☆☆☆";
+            } 
             tile.innerHTML = `
                 <div class="body">
-                    <div class="topbar">${app.title}</div>
-                    <a href="${app.href}" target="_blank" class="tile-content">
-                        <img class="app-icon" src="${app.icon}" alt="Icon">
-                        <div class="word">${app.title}</div>
-                        <div class="description">${app.desc}</div>
-                        <div class="rating">${app.rating}</div>
+                    <div class="topbar">${title}</div>
+                    <a href="${href}" target="_blank" class="tile-content">
+                        <img class="app-icon" src="${icon}" alt="Icon">
+                        <div class="word">${title}</div>
+                        <div class="description">${desc}</div>
+                        <div class="rating">${rating}</div>
                     </a>
                 </div>
             `;
@@ -294,6 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
             area.appendChild(tile);
        // } 
         if (cat === "web") {
+            
             const item = document.createElement('li');
             item.dataset.category = app.category;
             item.innerHTML = `
