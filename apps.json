@@ -32,13 +32,15 @@
         "category": "productivity"
     },
     {
-        "category": "web",
+        
         "href" : "https://docs.google.com/document/d/1fGG-miZgBFk-C0zfO8BPWsivqsRHK_3DChXCKDo8ShM/edit?usp=drivesdk",
-        "title" : "Lightning translate"   
+        "title" : "Lightning translate",
+        "category": "web"
     },
     {
-         "category": "web",
+        
         "href" : "https://nanami-says.tumblr.com/post/637859023755083776/part-i-chapters-1-9",
-        "title" : "Nanami translate" 
+        "title" : "Nanami translate",
+        "category": "web"
     }    
 ]
