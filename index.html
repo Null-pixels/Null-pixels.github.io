@@ -268,8 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const area = document.getElementById('game-area');
         apps.forEach(app => {
         let cat = app.category;
-       console.log(app.category.length);
-        if (cat.toString() != "web"){
+      //  if (cat.toString() != "web"){
             const tile = document.createElement('div');
             tile.className = 'window tile';
             tile.dataset.category = app.category;
@@ -293,7 +292,8 @@ document.addEventListener('DOMContentLoaded', () => {
             tile.style.height = heights[0];
         });
             area.appendChild(tile);
-        } else {
+       /* } 
+        else {
             const item = document.createElement('li');
             item.dataset.category = app.category;
             item.innerHTML = `
@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </a>
             `;
             sauce.appendChild(item);  
-        }      
+        }      */
         });       
     });
 
