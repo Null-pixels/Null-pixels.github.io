@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Professional RSVP Speed Reader</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* The Reader Container */
+        #reader-frame {
+            position: relative;
+            width: 600px;
+            height: 150px;
+            border-top: 2px solid #444;
+            border-bottom: 2px solid #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        /* The Vertical Red Lines */
+        .guide-line {
+            position: absolute;
+            width: 2px;
+            height: 40px;
+            background-color: #ff4444;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .top-line { top: 0; }
+        .bottom-line { bottom: 0; }
+
+        /* Word Container */
+        #word-container {
+            font-size: 48px;
+            white-space: pre;
+            display: flex;
+        }
+
+        .red-char { color: #ff4444; }
+
+        /* Controls */
+        .controls { width: 600px; display: flex; flex-direction: column; gap: 10px; }
+        textarea { width: 100%; height: 80px; background: #333; color: white; border: 1px solid #555; padding: 10px; border-radius: 5px; }
+        .row { display: flex; gap: 10px; align-items: center; }
+        button { padding: 10px 20px; cursor: pointer; background: #ff4444; border: none; color: white; font-weight: bold; border-radius: 3px; }
+        input { background: #333; color: white; border: 1px solid #555; padding: 5px; width: 60px; }
+    </style>
+</head>
+<body>
+
+    <div id="reader-frame">
+        <div class="guide-line top-line"></div>
+        <div id="word-container"></div>
+        <div class="guide-line bottom-line"></div>
+    </div>
+
+    <div class="controls">
+        <textarea id="text-input" placeholder="Paste text here...">The quick brown fox jumps over the lazy dog. Speed reading is a skill developed over time.</textarea>
+        <div class="row">
+            <label>WPM: </label>
+            <input type="number" id="wpm" value="400">
+            <button onclick="start()">START</button>
+            <button onclick="stop()">STOP</button>
+        </div>
+    </div>
+
+    <script>
+        let timer;
+        const container = document.getElementById('word-container');
+
+        function getFocusIndex(word) {
+            // Find the Optimal Recognition Point (approx 25-40% into the word)
+            const length = word.length;
+            if (length <= 1) return 0;
+            if (length <= 5) return 1;
+            if (length <= 9) return 2;
+            return 3;
+        }
+
+        function displayWord(word) {
+            container.innerHTML = '';
+            const focusIdx = getFocusIndex(word);
+            
+            // We use a fixed "offset" to keep the red letter centered
+            // The 10th character position is our center-point
+            const prefix = word.substring(0, focusIdx).padStart(10);
+            const focusChar = word[focusIdx];
+            const suffix = word.substring(focusIdx + 1);
+
+            const spanPrefix = document.createElement('span');
+            spanPrefix.innerText = prefix;
+            
+            const spanFocus = document.createElement('span');
+            spanFocus.className = 'red-char';
+            spanFocus.innerText = focusChar;
+
+            const spanSuffix = document.createElement('span');
+            spanSuffix.innerText = suffix;
+
+            container.appendChild(spanPrefix);
+            container.appendChild(spanFocus);
+            container.appendChild(spanSuffix);
+        }
+
+        function start() {
+            stop();
+            const text = document.getElementById('text-input').value;
+            const words = text.split(/\s+/).filter(w => w.length > 0);
+            const wpm = document.getElementById('wpm').value;
+            const ms = 60000 / wpm;
+            
+            let i = 0;
+            timer = setInterval(() => {
+                if (i < words.length) {
+                    displayWord(words[i]);
+                    i++;
+                } else {
+                    stop();
+                }
+            }, ms);
+        }
+
+        function stop() {
+            clearInterval(timer);
+        }
+    </script>
+</body>
+</html>
+
