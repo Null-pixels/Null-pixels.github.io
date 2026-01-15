@@ -2,141 +2,267 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Professional RSVP Speed Reader</title>
+    <title>Precision Vowel-Focus Reader</title>
     <style>
         body {
-            background-color: #1a1a1a;
-            color: white;
+            background-color: #0a0a0a;
+            color: #ffffff;
             font-family: 'Courier New', Courier, monospace;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; margin: 0; overflow: hidden;
         }
+/* Dark Mode classes */
+body.light-mode { background-color: #f0f0f0; color: #1a1a1a; }
+body.light-mode #reader-viewport { background: #f0f0f0; border-color: #ccc; }
+body.light-mode textarea { background: #fff; color: #333; border-color: #ccc; }
+body.light-mode #left-part, body.light-mode #right-part { color: #1a1a1a; }
+body.light-mode .guide { background-color: #888; }
 
-        /* The Reader Container */
-        #reader-frame {
+        /* Fixed Viewport - Prevents Shrinking */
+        #reader-viewport {
             position: relative;
-            width: 600px;
-            height: 150px;
-            border-top: 2px solid #444;
-            border-bottom: 2px solid #444;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            margin-bottom: 30px;
+            width: 700px;
+            height: 180px;
+            border-top: 2px solid #333;
+            border-bottom: 2px solid #333;
+            display: flex; align-items: center;
+            background: #0a0a0a;
         }
 
-        /* The Vertical Red Lines */
-        .guide-line {
+        /* Red Guide Lines */
+        .guide {
             position: absolute;
-            width: 2px;
-            height: 40px;
-            background-color: #ff4444;
             left: 50%;
+            width: 2px;
+            height: 35px;
+            background-color: #ccc;
             transform: translateX(-50%);
         }
-        .top-line { top: 0; }
-        .bottom-line { bottom: 0; }
+        .top-guide { top: 0; }
+        .bottom-guide { bottom: 0; }
 
-        /* Word Container */
-        #word-container {
-            font-size: 48px;
-            white-space: pre;
+        /* Word Alignment Engine */
+        .word-box {
             display: flex;
+            width: 100%;
+            font-size: 62px;
+            font-weight:601;
+            line-height: 1;
         }
 
-        .red-char { color: #ff4444; }
+        /* Left side pushes text to the right, right side pushes to the left */
+        #left-part { text-align: right; width: 50%; }
+        #focus-char { color: #ff3b3b; width: auto; text-align: center; min-width: 1ch; }
+        #right-part { text-align: left; width: 50%; }
 
-        /* Controls */
-        .controls { width: 600px; display: flex; flex-direction: column; gap: 10px; }
-        textarea { width: 100%; height: 80px; background: #333; color: white; border: 1px solid #555; padding: 10px; border-radius: 5px; }
-        .row { display: flex; gap: 10px; align-items: center; }
-        button { padding: 10px 20px; cursor: pointer; background: #ff4444; border: none; color: white; font-weight: bold; border-radius: 3px; }
-        input { background: #333; color: white; border: 1px solid #555; padding: 5px; width: 60px; }
+        .controls { margin-top: 40px; text-align: center; z-index: 100; }
+        textarea { width: 550px; height: 150px; background: #1a1a1a; color: #ddd; border: 1px solid #444; padding: 10px; font-family: sans-serif; }
+        .btn-row { margin-top: 15px; }
+        button { background: #ff3b3b; color: white; border: none; padding: 12px 30px; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        
+        /* The container box */
+.switch {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle; /* This keeps it centered with buttons/text */
+  width: 60px;
+  height: 34px;
+  margin-left: 10px;      /* Adds a little breathing room */
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider track */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: white;
+  transition: .4s;
+}
+
+/* The white sliding knob */
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: black;
+  transition: .4s;
+}
+
+/* Change background color when checked */
+input:checked + .slider {
+  background-color: black;
+}
+
+/* Move the knob when checked */
+input:checked + .slider:before {
+  transform: translateX(26px);
+  background-color: white; 
+  
+}
+
     </style>
 </head>
 <body>
-
-    <div id="reader-frame">
-        <div class="guide-line top-line"></div>
-        <div id="word-container"></div>
-        <div class="guide-line bottom-line"></div>
+   <div id="reader-viewport">
+        <div class="guide top-guide"></div>
+        <div class="word-box">
+            <div id="left-part"></div>
+            <div id="focus-char"></div>
+            <div id="right-part"></div>
+        </div>
+        <div class="guide bottom-guide"></div>
     </div>
 
     <div class="controls">
-        <textarea id="text-input" placeholder="Paste text here...">The quick brown fox jumps over the lazy dog. Speed reading is a skill developed over time.</textarea>
-        <div class="row">
+<textarea id="text-input" 
+  onfocus="if(this.value == 'Users may mistake a placeholder for a filled-in value and skip the field, leading to submission errors.') { this.value = ''; }" 
+  onblur="if(this.value == '') { this.value = 'Users may mistake a placeholder for a filled-in value and skip the field, leading to submission errors.'; }"
+>Users may mistake a placeholder for a filled-in value and skip the field, leading to submission errors.</textarea>
+        <div class="btn-row">
             <label>WPM: </label>
-            <input type="number" id="wpm" value="400">
-            <button onclick="start()">START</button>
-            <button onclick="stop()">STOP</button>
+            <button onclick="adjustWPM(-25)" style="padding:5px 10px; background:#444;">-</button>
+            <input type="number" id="wpm-input" value="315" style="width: 60px; padding: 5px;">
+            <button onclick="adjustWPM(25)" style="padding:5px 10px; background:#444;">+</button>
+            <button onclick="startReader()" style="margin-left:10px;">READ</button>
+<button onclick="pauseReader()" style="background: #444; margin-left: 10px;">PAUSE</button>
         </div>
+        <div class="btn-row">
+<button onclick="stopReader()" style=" margin-left: 10px;">STOP</button>
+<label class="switch">
+  <input type="checkbox">
+  <span class="slider"></span>
+</label>
+</div>
     </div>
+<script>
+let timer = null;
+let isPaused = false;
+let currentIndex = 0; // Track position for pause/resume
+let currentSpeed = 250;
+const vowels = "aeiouywAEIOUYW";
 
-    <script>
-        let timer;
-        const container = document.getElementById('word-container');
+// 1. Dark Mode Toggle Logic
+document.querySelector('.switch input').addEventListener('change', function() {
+    document.body.classList.toggle('light-mode', this.checked);
+});
 
-        function getFocusIndex(word) {
-            // Find the Optimal Recognition Point (approx 25-40% into the word)
-            const length = word.length;
-            if (length <= 1) return 0;
-            if (length <= 5) return 1;
-            if (length <= 9) return 2;
-            return 3;
+// 2. Speed Adjuster
+function adjustWPM(delta) {
+    const input = document.getElementById('wpm-input');
+    input.value = Math.max(50, parseInt(input.value) + delta);
+}
+
+// 3. Pause Logic
+function pauseReader() {
+    isPaused = !isPaused;
+    const btn = document.querySelector("button[onclick='pauseReader()']");
+    btn.innerText = isPaused ? " (▶) " : "PAUSE";
+    if (!isPaused) startReader(true); // Resume from current index
+}
+
+function getOrpIndex(word) {
+    const len = word.length;
+    if (len === 0) return 0;
+    const center = Math.floor(len / 2);
+
+    if (len <= 3) {
+        for (let i = 0; i < len; i++) {
+            if (vowels.includes(word[i])) return i;
+        }
+        return center;
+    }
+
+    if (len > 7) {
+        for (let offset = -2; offset <= 2; offset++) {
+            if (vowels.includes(word[center + offset])) return center + offset;
+        }
+        return center;
+    }
+
+    let vowelIndices = [];
+    for (let i = 0; i < len; i++) {
+        if (vowels.includes(word[i])) vowelIndices.push(i);
+    }
+
+    if (vowelIndices.length > 0) {
+        if (!vowels.includes(word[0])) return vowelIndices[0];
+        if (vowelIndices.length >= 3) return vowelIndices[2];
+        if (vowelIndices.length >= 2) return vowelIndices[1];
+    }
+    return center;
+}
+
+function renderWord(word) {
+    const orp = getOrpIndex(word);
+    document.getElementById('left-part').innerText = word.substring(0, orp);
+    document.getElementById('focus-char').innerText = word[orp] || "";
+    document.getElementById('right-part').innerText = word.substring(orp + 1);
+}
+
+function startReader(resume = false) {
+    if (!resume) {
+        stopReader();
+        currentIndex = 0;
+        currentSpeed = 250; 
+        isPaused = false;
+        document.querySelector("button[onclick='pauseReader()']").innerText = "PAUSE";
+    }
+
+    const text = document.getElementById('text-input').value;
+    const words = text.split(/\s+/).filter(w => w.length > 0);
+    const targetWpm = parseInt(document.getElementById('wpm-input').value);
+
+    const run = () => {
+        if (isPaused || currentIndex >= words.length) return;
+
+        const word = words[currentIndex];
+        renderWord(word);
+
+        // Calculate Delay
+        let delay = 60000 / currentSpeed;
+
+        // Punctuation Pause (Avoids repeating punctuation)
+const hasPunctuation = /[.?!]/.test(word);
+        const isRepeat = (words[currentIndex-1] && /[.?!]/.test(words[currentIndex-1])) || 
+                         (words[currentIndex+1] && /[.?!]/.test(words[currentIndex+1]));
+        
+        if (hasPunctuation && !isRepeat) {
+            delay *= 2.2; // Pause 2.2x longer at end of sentences
         }
 
-        function displayWord(word) {
-            container.innerHTML = '';
-            const focusIdx = getFocusIndex(word);
-            
-            // We use a fixed "offset" to keep the red letter centered
-            // The 10th character position is our center-point
-            const prefix = word.substring(0, focusIdx).padStart(10);
-            const focusChar = word[focusIdx];
-            const suffix = word.substring(focusIdx + 1);
-
-            const spanPrefix = document.createElement('span');
-            spanPrefix.innerText = prefix;
-            
-            const spanFocus = document.createElement('span');
-            spanFocus.className = 'red-char';
-            spanFocus.innerText = focusChar;
-
-            const spanSuffix = document.createElement('span');
-            spanSuffix.innerText = suffix;
-
-            container.appendChild(spanPrefix);
-            container.appendChild(spanFocus);
-            container.appendChild(spanSuffix);
+        // Speed Ramp
+        if (currentSpeed < targetWpm) {
+            currentSpeed += 5; 
+        } else {
+            currentSpeed = targetWpm;
         }
 
-        function start() {
-            stop();
-            const text = document.getElementById('text-input').value;
-            const words = text.split(/\s+/).filter(w => w.length > 0);
-            const wpm = document.getElementById('wpm').value;
-            const ms = 60000 / wpm;
-            
-            let i = 0;
-            timer = setInterval(() => {
-                if (i < words.length) {
-                    displayWord(words[i]);
-                    i++;
-                } else {
-                    stop();
-                }
-            }, ms);
-        }
+        currentIndex++;
+        timer = setTimeout(run, delay);
+    };
 
-        function stop() {
-            clearInterval(timer);
-        }
-    </script>
-</body>
-</html>
+    run();
+}
+
+function stopReader() {
+    clearTimeout(timer);
+    isPaused = false;
+    currentIndex = 0;
+    document.getElementById('left-part').innerText = "";
+    document.getElementById('focus-char').innerText = "";
+    document.getElementById('right-part').innerText = "";
+}
+</script>
+</body></html>
+
 
