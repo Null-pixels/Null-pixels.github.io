@@ -117,317 +117,120 @@ input:checked + .slider:before {
     </div>
 
     <div class="controls">
-        <textarea id="text-input">The algorithm now prioritizes vowels based on your specific rules. It checks word length and vowel position precisely.</textarea>
-        <div class="btn-row">
-            <label>WPM: </label>
-            <input type="number" id="wpm-input" value="300" style="width: 60px; padding: 5px;">
-            <button onclick="startReader()">READ</button>
-            <button onclick="stopReader()" style="background: #444; margin-left: 10px;">STOP</button>
-        </div>
-        <div class="btn-row">
-<label class="switch">Dark:</label>
-<label class="switch">
-  <input type="checkbox">
-  <span class="slider"></span>
-</label>
-</div>
-    </div>
-
-    <script>
-        let timer = null;
-        const vowels = "aeiouywAEIOUYW";
-
-     function getOrpIndex(word) {
-    const len = word.length;
-    if (len === 0) return 0;
-    const vowels = "aeiouyAEIOUY";
-    const center = Math.floor(len / 2);
-
-    // Rule 4: Small words (<= 3) - Take any vowel
-    if (len <= 3) {
-        for (let i = 0; i < len; i++) {
-            if (vowels.includes(word[i])) return i;
-        }
-        return center;
-    }
-
-    // NEW RULE: Center-Seeking for words longer than 6
-    if (len > 7) {
-        // Look at the center, then 1 step left/right, then 2 steps left/right
-        // This ensures the red letter stays near the physical center lines
-        for (let offset = -2; offset <= 2; offset++) {
-            if (vowels.includes(word[center + offset])) return center + offset;
-        }
-        
-        // Fallback: If no vowels near the center, use the center consonant
-        return center;
-    }
-
-    // Rules for Medium words (4 to 6)
-    let vowelIndices = [];
-    for (let i = 0; i < len; i++) {
-        if (vowels.includes(word[i])) vowelIndices.push(i);
-    }
-
-    if (vowelIndices.length > 0) {
-        // Rule 1: First vowel if not the first letter
-        if (!vowels.includes(word[0])) {
-            return vowelIndices[0];
-        }
-        // Rule 2: If starts with vowel, try 3rd vowel, then 2nd
-        if (vowelIndices.length >= 3) return vowelIndices[2];
-        if (vowelIndices.length >= 2) return vowelIndices[1];
-    }
-
-    // Rule 3: Final Fallback
-    return center;
-}
-
-        function renderWord(word) {
-            const orp = getOrpIndex(word);
-            document.getElementById('left-part').innerText = word.substring(0, orp);
-            document.getElementById('focus-char').innerText = word[orp] || "";
-            document.getElementById('right-part').innerText = word.substring(orp + 1);
-        }
-
-        function startReader() {
-            stopReader();
-            const text = document.getElementById('text-input').value;
-            const words = text.split(/\s+/).filter(w => w.length > 0);
-            const wpm = document.getElementById('wpm-input').value;
-            const speed = 60000 / wpm;
-
-            let index = 0;
-            timer = setInterval(() => {
-                if (index < words.length) {
-                    renderWord(words[index]);
-                    index++;
-                } else {
-                    stopReader();
-                }
-            }, speed);
-        }
-
-        function stopReader() {
-            clearInterval(timer);
-        }
-    </script>
-</body>
-</html>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Precision Vowel-Focus Reader</title>
-    <style>
-        body {
-            background-color: #0a0a0a;
-            color: #ffffff;
-            font-family: 'Courier New', Courier, monospace;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            height: 100vh; margin: 0; overflow: hidden;
-        }
-
-        /* Fixed Viewport - Prevents Shrinking */
-        #reader-viewport {
-            position: relative;
-            width: 600px;
-            height: 160px;
-            border-top: 2px solid #333;
-            border-bottom: 2px solid #333;
-            display: flex; align-items: center;
-            background: #0a0a0a;
-        }
-
-        /* Red Guide Lines */
-        .guide {
-            position: absolute;
-            left: 50%;
-            width: 2px;
-            height: 35px;
-            background-color: #ccc;
-            transform: translateX(-50%);
-        }
-        .top-guide { top: 0; }
-        .bottom-guide { bottom: 0; }
-
-        /* Word Alignment Engine */
-        .word-box {
-            display: flex;
-            width: 100%;
-            font-size: 50px;
-            font-weight:601;
-            line-height: 1;
-        }
-
-        /* Left side pushes text to the right, right side pushes to the left */
-        #left-part { text-align: right; width: 50%; }
-        #focus-char { color: #ff3b3b; width: auto; text-align: center; min-width: 1ch; }
-        #right-part { text-align: left; width: 50%; }
-
-        .controls { margin-top: 40px; text-align: center; z-index: 100; }
-        textarea { width: 500px; height: 100px; background: #1a1a1a; color: #ddd; border: 1px solid #444; padding: 10px; font-family: sans-serif; }
-        .btn-row { margin-top: 15px; }
-        button { background: #ff3b3b; color: white; border: none; padding: 12px 30px; font-weight: bold; cursor: pointer; border-radius: 4px; }
-        
-        /* The container box */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
-}
-
-/* Hide default HTML checkbox */
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-/* The slider track */
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #ddd;
-  transition: .4s;
-}
-
-/* The white sliding knob */
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
-  background-color: #0a0a0a;
-  transition: .4s;
-}
-
-/* Change background color when checked */
-input:checked + .slider {
-  background-color: #0a0a0a;
-}
-
-/* Move the knob when checked */
-input:checked + .slider:before {
-  transform: translateX(26px);
-  background-color: #ddd; 
+<textarea id="text-input" 
+  onfocus="if(this.value == 'Users may mistake a placeholder for a filled-in value and skip the field, leading to submission errors.') { this.value = ''; }" 
+  onblur="if(this.value == '') { this.value = 'Users may mistake a placeholder for a filled-in value and skip the field, leading to submission errors.'; }"
+>Users may mistake a placeholder for a filled-in value and skip the field, leading to submission errors.</textarea>
   
-}
-
-    </style>
-</head>
-<body>
-
-    <div id="reader-viewport">
-        <div class="guide top-guide"></div>
-        <div class="word-box">
-            <div id="left-part"></div>
-            <div id="focus-char"></div>
-            <div id="right-part"></div>
-        </div>
-        <div class="guide bottom-guide"></div>
-    </div>
-
-    <div class="controls">
-        <textarea id="text-input">The algorithm now prioritizes vowels based on your specific rules. It checks word length and vowel position precisely.</textarea>
-        <div class="btn-row">
+<div class="btn-row">
             <label>WPM: </label>
-            <input type="number" id="wpm-input" value="300" style="width: 60px; padding: 5px;">
-            <button onclick="startReader()">READ</button>
+            <button onclick="adjustWPM(-25)" style="padding:5px 10px; background:#444;">-</button>
+            <input type="number" id="wpm-input" value="315" style="width: 60px; padding: 5px;">
+            <button onclick="adjustWPM(25)" style="padding:5px 10px; background:#444;">+</button>
+            
+            <button onclick="startReader()" style="margin-left:10px;">READ</button>
             <button onclick="stopReader()" style="background: #444; margin-left: 10px;">STOP</button>
         </div>
-        <div class="btn-row">
-<label class="switch">Dark:</label>
-<label class="switch">
-  <input type="checkbox">
-  <span class="slider"></span>
-</label>
-</div>
-    </div>
 
-    <script>
-        let timer = null;
-        const vowels = "aeiouywAEIOUYW";
+<script>
+    let timer = null;
+    const vowels = "aeiouywAEIOUYW";
 
-     function getOrpIndex(word) {
-    const len = word.length;
-    if (len === 0) return 0;
-    const center = Math.floor(len / 2);
+    // --- NEW: Global controls for Ramp and Punctuation ---
+    let currentSpeed = 250; 
+    const PUNCTUATION_DELAY_MULTIPLIER = 2.5; 
 
-    // Rule 4: Small words (<= 3) - Take any vowel
-    if (len <= 3) {
+    function adjustWPM(delta) {
+        const input = document.getElementById('wpm-input');
+        input.value = parseInt(input.value) + delta;
+    }
+
+    // Your getOrpIndex remains untouched
+    function getOrpIndex(word) {
+        const len = word.length;
+        if (len === 0) return 0;
+        const center = Math.floor(len / 2);
+
+        if (len <= 3) {
+            for (let i = 0; i < len; i++) {
+                if (vowels.includes(word[i])) return i;
+            }
+            return center;
+        }
+
+        if (len > 7) {
+            for (let offset = -2; offset <= 2; offset++) {
+                if (vowels.includes(word[center + offset])) return center + offset;
+            }
+            return center;
+        }
+
+        let vowelIndices = [];
         for (let i = 0; i < len; i++) {
-            if (vowels.includes(word[i])) return i;
+            if (vowels.includes(word[i])) vowelIndices.push(i);
+        }
+
+        if (vowelIndices.length > 0) {
+            if (!vowels.includes(word[0])) return vowelIndices[0];
+            if (vowelIndices.length >= 3) return vowelIndices[2];
+            if (vowelIndices.length >= 2) return vowelIndices[1];
         }
         return center;
     }
 
-    // NEW RULE: Center-Seeking for words longer than 6
-    if (len > 7) {
-        // Look at the center, then 1 step left/right, then 2 steps left/right
-        // This ensures the red letter stays near the physical center lines
-        for (let offset = -2; offset <= 2; offset++) {
-            if (vowels.includes(word[center + offset])) return center + offset;
-        }
+    function renderWord(word) {
+        const orp = getOrpIndex(word);
+        document.getElementById('left-part').innerText = word.substring(0, orp);
+        document.getElementById('focus-char').innerText = word[orp] || "";
+        document.getElementById('right-part').innerText = word.substring(orp + 1);
+    }
+
+    // Optimized startReader with Ramp and Punctuation logic
+    function startReader() {
+        stopReader();
+        const text = document.getElementById('text-input').value;
+        const words = text.split(/\s+/).filter(w => w.length > 0);
+        const targetWpm = parseInt(document.getElementById('wpm-input').value);
         
-        // Fallback: If no vowels near the center, use the center consonant
-        return center;
+        let index = 0;
+        currentSpeed = 250; // Start Ramp
+
+        const run = () => {
+            if (index >= words.length) {
+                stopReader();
+                return;
+            }
+
+            const word = words[index];
+            renderWord(word);
+
+            // 1. Calculate Base Delay
+            let delay = 60000 / currentSpeed;
+
+            // 2. Punctuation Logic (Avoids ellipses)
+            const hasEnding = /[.?!]/.test(word);
+            const isEllipsis = word.includes('..');
+            if (hasEnding && !isEllipsis) {
+                delay *= PUNCTUATION_DELAY_MULTIPLIER;
+            }
+
+            // 3. Ramp-up Logic (Increments speed until target is reached)
+            if (currentSpeed < targetWpm) {
+                currentSpeed += 15; 
+            } else {
+                currentSpeed = targetWpm;
+            }
+
+            index++;
+            timer = setTimeout(run, delay);
+        };
+
+        timer = setTimeout(run, 60000 / currentSpeed);
     }
 
-    // Rules for Medium words (4 to 6)
-    let vowelIndices = [];
-    for (let i = 0; i < len; i++) {
-        if (vowels.includes(word[i])) vowelIndices.push(i);
+    function stopReader() {
+        clearTimeout(timer); // Changed to clearTimeout for the recursive logic
     }
-
-    if (vowelIndices.length > 0) {
-        // Rule 1: First vowel if not the first letter
-        if (!vowels.includes(word[0])) {
-            return vowelIndices[0];
-        }
-        // Rule 2: If starts with vowel, try 3rd vowel, then 2nd
-        if (vowelIndices.length >= 3) return vowelIndices[2];
-        if (vowelIndices.length >= 2) return vowelIndices[1];
-    }
-
-    // Rule 3: Final Fallback
-    return center;
-}
-
-        function renderWord(word) {
-            const orp = getOrpIndex(word);
-            document.getElementById('left-part').innerText = word.substring(0, orp);
-            document.getElementById('focus-char').innerText = word[orp] || "";
-            document.getElementById('right-part').innerText = word.substring(orp + 1);
-        }
-
-        function startReader() {
-            stopReader();
-            const text = document.getElementById('text-input').value;
-            const words = text.split(/\s+/).filter(w => w.length > 0);
-            const wpm = document.getElementById('wpm-input').value;
-            const speed = 60000 / wpm;
-
-            let index = 0;
-            timer = setInterval(() => {
-                if (index < words.length) {
-                    renderWord(words[index]);
-                    index++;
-                } else {
-                    stopReader();
-                }
-            }, speed);
-        }
-
-        function stopReader() {
-            clearInterval(timer);
-        }
-    </script>
+</script>
 </body>
 </html>
-
