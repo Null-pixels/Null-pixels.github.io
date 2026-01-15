@@ -23,6 +23,7 @@
         "rating": "★★★☆☆",
         "category": "games"
     },
+    
     {
         "href": "addsub.html",
         "title": "Just Plus/Minus",
@@ -30,6 +31,14 @@
         "icon": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrqxX-J2dNtbBe1wSwRXBjBbEdu7-MUoXYdg&s",
         "rating": "★★★☆☆",
         "category": "productivity"
+    },
+    {
+        "href": "Rsvp.html",
+        "title": "speed read",
+        "desc": "optional point recognition.",
+        "icon": "https://m.media-amazon.com/images/I/81BtGkgPz7L._UF350,350_QL80_.jpg",
+        "rating": "★★★☆☆",
+        "category": "games"
     },
     {
         
